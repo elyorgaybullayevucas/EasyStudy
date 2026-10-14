@@ -1,42 +1,64 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
-import { useAuth } from "@/lib/auth";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+
+import { AuthCard } from "@/components/auth/AuthCard";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { Alert } from "@/components/ui/Alert";
+import { ApiError } from "@/lib/api";
+import { safeNext } from "@/lib/format";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const { login, user } = useAuth();
   const router = useRouter();
+  const next = safeNext(useSearchParams().get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  async function onSubmit(e: FormEvent) {
+  useEffect(() => {
+    if (user) router.replace(next);
+  }, [user, next, router]);
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
+    setError("");
+    setSubmitting(true);
     try {
       await login(email, password);
-      router.push("/");
+      router.replace(next);
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
+      setError(err instanceof ApiError ? err.message : "Kirishda xatolik");
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-sm space-y-4 rounded-lg border bg-white p-6">
-      <h1 className="text-xl font-semibold">Kirish</h1>
-      <input className="w-full rounded border p-2" type="email" placeholder="Email" value={email}
-             onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-      <input className="w-full rounded border p-2" type="password" placeholder="Parol" value={password}
-             onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button disabled={busy} className="w-full rounded bg-slate-900 p-2 text-white disabled:opacity-50">
-        {busy ? "..." : "Kirish"}
-      </button>
-    </form>
+    <AuthCard title="Xush kelibsiz!" subtitle="Hisobingizga kiring va o'qishni davom ettiring"
+      footer={<>Hisobingiz yo&apos;qmi? <Link href={`/register${next !== "/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`} className="font-semibold text-brand-700 hover:underline">Ro&apos;yxatdan o&apos;ting</Link></>}>
+      <form onSubmit={onSubmit} className="space-y-5">
+        {error && <Alert>{error}</Alert>}
+        <div>
+          <label htmlFor="email" className="label">Email</label>
+          <input id="email" type="email" required autoComplete="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="siz@example.com" />
+        </div>
+        <div>
+          <label htmlFor="password" className="label">Parol</label>
+          <input id="password" type="password" required autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+        </div>
+        <button type="submit" disabled={submitting} className="btn-primary btn-lg w-full">{submitting ? "Kirilmoqda..." : "Kirish"}</button>
+      </form>
+    </AuthCard>
   );
 }

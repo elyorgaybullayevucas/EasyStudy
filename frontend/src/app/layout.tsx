@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
+
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/Navbar";
 import "./globals.css";
-import { AuthProvider } from "@/lib/auth";
-import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "EasyStudy - IELTS, SAT, TOPIK mock testlar",
-  description: "Xalqaro sertifikatlarga tayyorlov va mock imtihon platformasi",
+  title: { default: "EasyStudy — kurslar va mock imtihonlar", template: "%s | EasyStudy" },
+  description: "IELTS, SAT, TOPIK va boshqa xalqaro sertifikatlarga tayyorlov: video kurslar, mock imtihonlar va sertifikatlar.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uz">
-      <body className="min-h-screen">
+    <html lang="uz" className="h-full">
+      <body className="flex min-h-full flex-col font-sans">
         <AuthProvider>
-          <Nav />
-          <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
         </AuthProvider>
       </body>
     </html>

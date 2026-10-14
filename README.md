@@ -1,24 +1,31 @@
-# EasyStudy – xalqaro sertifikatlarga tayyorlov va mock imtihon platformasi
+# EasyStudy — xalqaro sertifikatlarga tayyorlov platformasi
 
-Stek: Spring Boot 3 (Java 21) + PostgreSQL 16 + Next.js 15 (TypeScript).
+Kurslar (video darslar, testlar, progress, sertifikat) **va** mock imtihonlar (IELTS, SAT, TOPIK formatida, taymer va band konversiyasi bilan) bir platformada. Har bir kursni alohida o'qituvchi tayyorlaydi; o'qituvchilar maqolalar ham chop etadi.
+
+Stek: Spring Boot 3 (Java 21) + PostgreSQL 16 + Next.js 15 (TypeScript, Tailwind 4).
+
+## Imkoniyatlar
+
+**Talaba**
+- Bosh sahifa: yo'nalishlar, mashhur kurslar, tavsiya etilgan mock imtihonlar, o'qituvchilar maqolalari
+- Kurslar katalogi (qidiruv, yo'nalish, daraja, sahifalash), kurs sahifasi, bepul tanishuv darsi, yozilish
+- O'quv rejimi: video (YouTube / Vimeo / mp4), konspekt, "Darsni tugatdim", testlar, progress
+- Sertifikat: kurs to'liq tugagach avtomatik, noyob kod, PDF chop etish, ochiq tekshirish sahifasi
+- Mock imtihonlar: bo'limlar, 6 xil savol turi, server taymeri, avtosaqlash, avtomatik baholash, xom ball → band/shkala
+- Shaxsiy kabinet: kurslarim, imtihon natijalarim (eng yaxshi natija), sertifikatlarim, profil
+
+**O'qituvchi** (`TEACHER` roli, `/admin`)
+- O'z kurslarini yaratadi: darslar, testlar; faqat o'z kurslarini ko'radi va tahrirlaydi
+- Mock imtihonlar: bo'limlar, savollar (javob kaliti bilan), ball konversiyasi
+- Maqolalar: o'z sohasi bo'yicha postlar (qoralama / nashr)
+- Ochiq profil `/teachers/{id}`: sarlavha, bio, rasm, kurslari, maqolalari
+
+**Administrator**: barcha kontent, yo'nalishlar (kategoriyalar), foydalanuvchi rollari, imtihonlarni nashr qilish/o'chirish.
 
 ## Ishga tushirish
 
 ```bash
-cp .env.example .env        # JWT_SECRET ni almashtiring
-docker compose up --build
-```
-
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8080 (Swagger: /swagger-ui.html)
-- Demo admin: `.env` dagi DEMO_ADMIN_EMAIL / DEMO_ADMIN_PASSWORD bilan birinchi ishga tushishda yaratiladi (prod'da bo'sh qoldiring)
-- Lokal (Docker'siz): JDK 21 + Maven, `cd backend && APP_JWT_SECRET=... mvn spring-boot:run`; `cd frontend && npm install && npm run dev`
-
-## Lokal ishga tushirish (sinalgan konfiguratsiya)
-
-Baza va backend Docker'da, frontend host'da Node bilan (Docker ichida `npm ci` sekin tarmoqda uzilib qoladi):
-
-```bash
+cp .env.example .env        # JWT_SECRET ni almashtiring, DEMO_ADMIN_PASSWORD bering
 docker compose up -d db backend
 ```
 
@@ -27,42 +34,51 @@ cd frontend && npm install && npm run dev
 ```
 
 - Frontend: http://localhost:3000, API: http://localhost:8080, Swagger: http://localhost:8080/swagger-ui.html
-- Docker'dagi PostgreSQL host'da **5433** portda (lokal PostgreSQL 18 allaqachon 5432 ni band qilgan).
-- Image'lar `mirror.gcr.io` orqali tortiladi, chunki `auth.docker.io` bu tarmoqda ochilmaydi. Qatlam yuklanishi uzilsa (`short read`), buyruqni qayta ishga tushiring.
-- Bazaga ulanish: `docker exec -it easystudy-db-1 psql -U easystudy -d easystudy`
-
-## Holat
-
-- Backend Docker'da kompilyatsiya qilindi va ishga tushdi: Flyway 2 ta migratsiya, Hibernate sxema tekshiruvi o'tdi.
-- To'liq oqim sinaldi (API va brauzer): ro'yxatdan o'tish → imtihon → 3 javob (avtosaqlash) → topshirish → natija (band konversiyasi bilan). Javob kaliti client'ga chiqmasligi, 401/403, CSP headerlar tekshirildi.
+- Docker'dagi PostgreSQL host'da **5433** portda (lokal PostgreSQL 5432 ni band qilgan bo'lsa).
+- Image'lar `mirror.gcr.io` orqali tortiladi (`auth.docker.io` yopiq tarmoqlar uchun). Qatlam yuklanishi uzilsa buyruqni qayta bering.
+- Frontend'ni Docker'da qurish ham mumkin (`docker compose up --build`), lekin sekin tarmoqda `npm ci` uzilib qolishi mumkin.
+- Demo ma'lumotlar: 5 ta yo'nalish, IELTS Writing kursi (3 dars + test), IELTS Reading va SAT Math mock imtihonlari, 1 ta maqola. Demo admin `.env` dan.
 
 ## Xavfsizlik qarorlari
 
-- Access JWT 15 daqiqa (Authorization header), refresh token 7 kun, HttpOnly+Secure+SameSite=Strict cookie, DB da hash holda saqlanadi va aylantiriladi (rotation).
-- Parollar Argon2id.
-- To'g'ri javoblar hech qachon client'ga yuborilmaydi; baholash faqat serverda.
-- Urinish (attempt) muddati serverda; muddat o'tgach javob qabul qilinmaydi.
-- Login uchun rate limit (Bucket4j), CORS faqat ruxsat etilgan originlar, CSP/HSTS header.
-- Flyway migratsiyalar; Hibernate `ddl-auto=validate`.
-- Refresh cookie SameSite=Strict bo'lgani uchun prod'da frontend va API bir "site" da bo'lishi shart (masalan app.example.uz va api.example.uz), aks holda cookie yuborilmaydi.
+- Access JWT 15 daqiqa (xotirada, localStorage emas), refresh token 7 kun HttpOnly+SameSite=Strict cookie, DB da hash, rotation va reuse-detection.
+- Parollar Argon2id; login/register/refresh uchun IP bo'yicha rate limit; CSP, HSTS, X-Frame-Options.
+- Test va imtihon javob kalitlari client'ga hech qachon yuborilmaydi; baholash faqat serverda.
+- Imtihon taymeri serverda; muddat o'tgach javob qabul qilinmaydi va urinish avtomatik baholanadi.
+- O'qituvchi faqat o'z kurs/test/maqolalarini boshqaradi (server tomonda tekshiriladi); kategoriya va rollar faqat admin.
+- Hibernate `ddl-auto=validate`, Flyway migratsiyalar, audit log.
+- Prod'da frontend va API bir "site" da bo'lishi shart (masalan app.example.uz va api.example.uz), aks holda refresh cookie yuborilmaydi.
 
 ## API qisqacha
 
-| Metod | Yo'l | Kim | Vazifa |
-|---|---|---|---|
-| POST | /api/auth/register, /login, /refresh, /logout | hamma | autentifikatsiya |
-| GET | /api/auth/me | login | joriy foydalanuvchi |
-| GET | /api/exams, /api/exams/{id} | hamma | nashr etilgan imtihonlar (javob kalitisiz) |
-| POST | /api/attempts | STUDENT | urinish boshlash |
-| PUT | /api/attempts/{id}/answers | egasi | javobni saqlash (muddat ichida) |
-| POST | /api/attempts/{id}/submit | egasi | topshirish va baholash |
-| GET | /api/attempts/{id}/result | egasi | natija |
-| POST | /api/admin/exams, .../sections, .../questions | ADMIN, TEACHER | kontent yaratish |
-| PATCH | /api/admin/exams/{id}/publish | ADMIN | nashr qilish |
+| Yo'l | Kim | Vazifa |
+|---|---|---|
+| `POST /api/auth/register, login, refresh, logout`, `GET /api/auth/me` | hamma / login | autentifikatsiya |
+| `GET /api/categories` | hamma | yo'nalishlar (kurs va imtihon soni bilan) |
+| `GET /api/courses`, `/api/courses/{slug}`, `/lessons/{id}` | hamma | katalog, kurs, dars (bepul yoki yozilgan) |
+| `POST /api/courses/{slug}/enroll`, `GET .../progress` | login | yozilish, progress |
+| `POST/DELETE /api/lessons/{id}/complete` | yozilgan | darsni tugatish |
+| `GET /api/quizzes/{id}`, `POST .../submit` | yozilgan | kurs testi |
+| `GET /api/certificates/{code}` | hamma | sertifikatni tekshirish |
+| `GET /api/exams`, `/api/exams/{id}` | hamma | mock imtihonlar |
+| `POST /api/attempts`, `PUT .../answers`, `POST .../submit`, `GET .../result` | login | imtihon urinishi |
+| `GET /api/me`, `PATCH /api/me`, `POST /api/me/password`, `/courses`, `/dashboard`, `/certificates` | login | profil va kabinet |
+| `GET /api/posts`, `/api/posts/{slug}`, `GET /api/teachers/{id}` | hamma | maqolalar, o'qituvchi profili |
+| `/api/admin/courses, lessons, quizzes, exams, posts` | TEACHER (o'ziniki), ADMIN | kontent boshqaruvi |
+| `/api/admin/categories (yozish), /api/admin/users` | ADMIN | yo'nalishlar, rollar |
 
 ## Struktura
 
 ```
-backend/   Spring Boot: config, security, domain, repository, service, web, dto
-frontend/  Next.js App Router: app/(auth), app/exams, app/attempts
+backend/src/main/java/uz/easystudy/
+  config/      xavfsizlik, properties, demo admin
+  domain/      JPA entitylar (User, Course, Lesson, Quiz*, Enrollment, Certificate, Exam, Attempt, Post ...)
+  repository/  Spring Data JPA
+  service/     Course, Learning, Exam, Attempt, Grading, Post, Category, Profile, Admin, Auth
+  web/         REST kontrollerlar
+  resources/db/migration/  Flyway V1..V5
+frontend/src/
+  app/         Next.js App Router sahifalari (courses, learn, exams, attempts, blog, teachers, dashboard, admin ...)
+  components/  layout, ui, auth, course, exam, post, dashboard, admin
+  lib/         api.ts (client), types.ts, format.ts
 ```

@@ -60,8 +60,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/exams/**").permitAll()
-                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers(HttpMethod.GET, "/api/exams/**", "/api/courses/**", "/api/categories/**",
+                        "/api/certificates/**", "/api/posts/**", "/api/teachers/**").permitAll()
+                // Rol tekshiruvi kontrollerlardagi @PreAuthorize orqali: token yo'q -> 401, rol yetmasa -> 403
+                .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated())
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

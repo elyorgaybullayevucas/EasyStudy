@@ -30,6 +30,16 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    /** O'qituvchi profili uchun: qisqa sarlavha (masalan "IELTS 8.5, 6 yillik tajriba"). */
+    @Column(length = 160)
+    private String headline;
+
+    @Column(columnDefinition = "text")
+    private String bio;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

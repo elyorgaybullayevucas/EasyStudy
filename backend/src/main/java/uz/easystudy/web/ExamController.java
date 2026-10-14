@@ -16,8 +16,9 @@ public class ExamController {
     private final ExamService exams;
 
     @GetMapping
-    public List<ExamSummary> list() {
-        return exams.listPublished();
+    public List<ExamSummary> list(@RequestParam(required = false) String category,
+                                  @RequestParam(required = false) Boolean featured) {
+        return exams.listPublished(category, featured);
     }
 
     @GetMapping("/{id}")

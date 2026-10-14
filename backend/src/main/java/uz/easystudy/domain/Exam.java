@@ -28,6 +28,17 @@ public class Exam {
     @Column(nullable = false)
     private boolean published = false;
 
+    @Column(nullable = false)
+    private boolean featured = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CourseLevel level = CourseLevel.INTERMEDIATE;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 

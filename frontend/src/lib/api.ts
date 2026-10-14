@@ -1,31 +1,38 @@
-"use client";
+import type {
+  AdminStats, AnswerResponse, AttemptResult, AttemptView, BandRow, Category, Certificate, CourseAdminDetail,
+  CourseDetail, CourseListItem, CourseProgress, DashboardStats, ExamAdminDetail, ExamDetail, ExamSummary, Lesson,
+  MyCourse, Page, PostDetail, PostListItem, QuestionType, QuizAdmin, QuizPublic, QuizResult, TeacherProfile,
+  TokenResponse, User, UserRole,
+} from "./types";
+
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 /**
- * API mijozi.
- * - Access token faqat xotirada (localStorage emas: XSS orqali o'g'irlanmasin).
- * - Refresh token HttpOnly cookie'da; 401 bo'lsa bir marta /auth/refresh chaqiriladi.
+ * Access token faqat xotirada (localStorage emas: XSS orqali o'g'irlanmasin).
+ * Refresh token HttpOnly cookie'da; 401 bo'lsa bir marta /auth/refresh chaqiriladi.
  */
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-
 let accessToken: string | null = null;
 let refreshing: Promise<boolean> | null = null;
 
-export function setAccessToken(t: string | null) {
-  accessToken = t;
-}
-export function getAccessToken() {
-  return accessToken;
-}
+export const tokenStore = {
+  get: () => accessToken,
+  set: (t: string | null) => {
+    accessToken = t;
+  },
+};
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
 
-async function tryRefresh(): Promise<boolean> {
+export async function tryRefresh(): Promise<boolean> {
   if (!refreshing) {
-    refreshing = fetch(`${API}/api/auth/refresh`, { method: "POST", credentials: "include" })
+    refreshing = fetch(`${API_URL}/api/auth/refresh`, { method: "POST", credentials: "include" })
       .then(async (r) => {
         if (!r.ok) return false;
         const data = (await r.json()) as TokenResponse;
@@ -38,78 +45,210 @@ async function tryRefresh(): Promise<boolean> {
   return refreshing;
 }
 
-export async function api<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
-  const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
-  if (init.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
-  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+type RequestOptions = Omit<RequestInit, "body"> & { body?: unknown };
 
-  const res = await fetch(`${API}${path}`, { ...init, headers, credentials: "include" });
+export async function request<T>(path: string, { body, headers, ...init }: RequestOptions = {}, retry = true): Promise<T> {
+  const h: Record<string, string> = { ...(headers as Record<string, string>) };
+  if (body !== undefined) h["Content-Type"] = "application/json";
+  if (accessToken) h["Authorization"] = `Bearer ${accessToken}`;
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers: h,
+      credentials: "include",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new ApiError(0, "Serverga ulanib bo'lmadi. Internet aloqasini tekshiring.");
+  }
 
   if (res.status === 401 && retry && !path.startsWith("/api/auth/")) {
-    if (await tryRefresh()) return api<T>(path, init, false);
-  }
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const p = await res.json();
-      detail = p.detail ?? detail;
-    } catch {}
-    throw new ApiError(res.status, detail);
+    if (await tryRefresh()) return request<T>(path, { body, headers, ...init }, false);
+    if (typeof window !== "undefined") window.dispatchEvent(new Event("auth:expired"));
   }
   if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const detail = (data as { detail?: string } | null)?.detail;
+    throw new ApiError(res.status, detail ?? (res.status >= 500 ? "Serverda xatolik yuz berdi" : "So'rovni bajarib bo'lmadi"));
+  }
+  return data as T;
 }
 
-// ---------- tiplar (backend DTO larga mos) ----------
-export type UserResponse = { id: number; email: string; fullName: string | null; role: "STUDENT" | "TEACHER" | "ADMIN" };
-export type TokenResponse = { accessToken: string; expiresIn: number; user: UserResponse };
+/** Server komponentlar uchun: xatolikda `fallback` qaytaradi, sahifa yiqilmaydi. */
+export async function serverFetch<T>(path: string, fallback: T, revalidate = 30): Promise<T> {
+  try {
+    const res = await fetch(`${process.env.API_URL_INTERNAL ?? API_URL}${path}`, { next: { revalidate } });
+    if (!res.ok) return fallback;
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
 
-export type QuestionType = "SINGLE_CHOICE" | "MULTI_CHOICE" | "GAP_FILL" | "TRUE_FALSE_NG" | "MATCHING" | "ESSAY";
-export type Option = { key: string; text: string };
-export type QuestionView = {
-  id: number; orderIndex: number; type: QuestionType; prompt: string;
-  passage: string | null; options: Option[] | null; points: number;
-};
-export type SectionView = { id: number; title: string; orderIndex: number; durationMinutes: number; questions: QuestionView[] };
-export type ExamSummary = { id: number; code: string; title: string; description: string | null; totalMinutes: number; questionCount: number };
-export type ExamDetail = { id: number; code: string; title: string; description: string | null; sections: SectionView[] };
-
-export type AnswerResponse = { value?: string; values?: string[]; text?: string };
-export type AttemptStatus = "IN_PROGRESS" | "SUBMITTED" | "EXPIRED" | "GRADED";
-export type AttemptView = {
-  id: number; examId: number; examTitle: string; status: AttemptStatus;
-  startedAt: string; expiresAt: string; submittedAt: string | null;
-  rawScore: number | null; scaledScore: number | null;
-  answers: Record<string, AnswerResponse>;
-};
-export type AnswerResult = { questionId: number; response: AnswerResponse | null; correct: boolean | null; points: number | null };
-export type AttemptResult = {
-  id: number; examId: number; examTitle: string; status: AttemptStatus;
-  rawScore: number | null; maxScore: number; scaledScore: number | null; answers: AnswerResult[];
+export const qs = (params: Record<string, string | number | boolean | undefined | null>) => {
+  const s = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== "") s.set(k, String(v));
+  const str = s.toString();
+  return str ? `?${str}` : "";
 };
 
-// ---------- endpointlar ----------
-export const Auth = {
-  login: (email: string, password: string) =>
-    api<TokenResponse>("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
-  register: (email: string, password: string, fullName: string) =>
-    api<TokenResponse>("/api/auth/register", { method: "POST", body: JSON.stringify({ email, password, fullName }) }),
-  refresh: tryRefresh,
-  logout: () => api<void>("/api/auth/logout", { method: "POST" }),
-  me: () => api<UserResponse>("/api/auth/me"),
+export const api = {
+  auth: {
+    register: (data: { fullName: string; email: string; password: string }) =>
+      request<TokenResponse>("/api/auth/register", { method: "POST", body: data }),
+    login: (data: { email: string; password: string }) =>
+      request<TokenResponse>("/api/auth/login", { method: "POST", body: data }),
+    logout: () => request<void>("/api/auth/logout", { method: "POST" }),
+    me: () => request<User>("/api/auth/me"),
+  },
+  me: {
+    update: (data: { fullName: string; headline?: string; bio?: string; avatarUrl?: string }) =>
+      request<User>("/api/me", { method: "PATCH", body: data }),
+    changePassword: (data: { currentPassword: string; newPassword: string }) =>
+      request<void>("/api/me/password", { method: "POST", body: data }),
+    courses: () => request<MyCourse[]>("/api/me/courses"),
+    dashboard: () => request<DashboardStats>("/api/me/dashboard"),
+    certificates: () => request<Certificate[]>("/api/me/certificates"),
+  },
+  categories: { list: () => request<Category[]>("/api/categories") },
+  courses: {
+    list: (params: Record<string, string | number | undefined> = {}) => request<Page<CourseListItem>>(`/api/courses${qs(params)}`),
+    get: (slug: string) => request<CourseDetail>(`/api/courses/${encodeURIComponent(slug)}`),
+    enroll: (slug: string) => request<CourseProgress>(`/api/courses/${encodeURIComponent(slug)}/enroll`, { method: "POST" }),
+    progress: (slug: string) => request<CourseProgress>(`/api/courses/${encodeURIComponent(slug)}/progress`),
+    lesson: (slug: string, lessonId: number) => request<Lesson>(`/api/courses/${encodeURIComponent(slug)}/lessons/${lessonId}`),
+  },
+  learning: {
+    completeLesson: (id: number) => request<CourseProgress>(`/api/lessons/${id}/complete`, { method: "POST" }),
+    uncompleteLesson: (id: number) => request<CourseProgress>(`/api/lessons/${id}/complete`, { method: "DELETE" }),
+    quiz: (id: number) => request<QuizPublic>(`/api/quizzes/${id}`),
+    submitQuiz: (id: number, answers: { questionId: number; optionId: number }[]) =>
+      request<QuizResult>(`/api/quizzes/${id}/submit`, { method: "POST", body: { answers } }),
+  },
+  certificates: { verify: (code: string) => request<Certificate>(`/api/certificates/${encodeURIComponent(code)}`) },
+  exams: {
+    list: (params: { category?: string; featured?: boolean } = {}) => request<ExamSummary[]>(`/api/exams${qs(params)}`),
+    get: (id: number | string) => request<ExamDetail>(`/api/exams/${id}`),
+  },
+  attempts: {
+    start: (examId: number) => request<AttemptView>("/api/attempts", { method: "POST", body: { examId } }),
+    get: (id: number | string) => request<AttemptView>(`/api/attempts/${id}`),
+    mine: () => request<AttemptView[]>("/api/attempts"),
+    answer: (id: number | string, questionId: number, response: AnswerResponse) =>
+      request<void>(`/api/attempts/${id}/answers`, { method: "PUT", body: { questionId, response } }),
+    submit: (id: number | string) => request<AttemptResult>(`/api/attempts/${id}/submit`, { method: "POST" }),
+    result: (id: number | string) => request<AttemptResult>(`/api/attempts/${id}/result`),
+  },
+  posts: {
+    list: (params: Record<string, string | number | undefined> = {}) => request<Page<PostListItem>>(`/api/posts${qs(params)}`),
+    get: (slug: string) => request<PostDetail>(`/api/posts/${encodeURIComponent(slug)}`),
+  },
+  teachers: { get: (id: number | string) => request<TeacherProfile>(`/api/teachers/${id}`) },
+  admin: {
+    stats: () => request<AdminStats>("/api/admin/stats"),
+    courses: (params: { search?: string; page?: number } = {}) => request<Page<CourseListItem>>(`/api/admin/courses${qs({ ...params, size: 50 })}`),
+    course: (id: number) => request<CourseAdminDetail>(`/api/admin/courses/${id}`),
+    createCourse: (data: CourseInput) => request<CourseAdminDetail>("/api/admin/courses", { method: "POST", body: data }),
+    updateCourse: (id: number, data: CourseInput) => request<CourseAdminDetail>(`/api/admin/courses/${id}`, { method: "PUT", body: data }),
+    deleteCourse: (id: number) => request<void>(`/api/admin/courses/${id}`, { method: "DELETE" }),
+    createLesson: (courseId: number, data: LessonInput) => request<Lesson>(`/api/admin/courses/${courseId}/lessons`, { method: "POST", body: data }),
+    updateLesson: (id: number, data: LessonInput) => request<Lesson>(`/api/admin/lessons/${id}`, { method: "PUT", body: data }),
+    deleteLesson: (id: number) => request<void>(`/api/admin/lessons/${id}`, { method: "DELETE" }),
+    quiz: (id: number) => request<QuizAdmin>(`/api/admin/quizzes/${id}`),
+    createQuiz: (courseId: number, data: QuizInput) => request<QuizAdmin>(`/api/admin/courses/${courseId}/quizzes`, { method: "POST", body: data }),
+    updateQuiz: (id: number, data: QuizInput) => request<QuizAdmin>(`/api/admin/quizzes/${id}`, { method: "PUT", body: data }),
+    deleteQuiz: (id: number) => request<void>(`/api/admin/quizzes/${id}`, { method: "DELETE" }),
+    categories: () => request<Category[]>("/api/admin/categories"),
+    createCategory: (data: { name: string; description?: string; icon?: string }) => request<Category>("/api/admin/categories", { method: "POST", body: data }),
+    deleteCategory: (id: number) => request<void>(`/api/admin/categories/${id}`, { method: "DELETE" }),
+    users: (params: { search?: string; page?: number } = {}) => request<Page<User>>(`/api/admin/users${qs({ ...params, size: 50 })}`),
+    setRole: (id: number, role: UserRole) => request<User>(`/api/admin/users/${id}/role`, { method: "PATCH", body: { role } }),
+    // mock imtihonlar
+    exams: () => request<ExamSummary[]>("/api/admin/exams"),
+    exam: (id: number) => request<ExamAdminDetail>(`/api/admin/exams/${id}`),
+    createExam: (data: ExamInput) => request<ExamAdminDetail>("/api/admin/exams", { method: "POST", body: data }),
+    updateExam: (id: number, data: ExamInput) => request<ExamAdminDetail>(`/api/admin/exams/${id}`, { method: "PUT", body: data }),
+    deleteExam: (id: number) => request<void>(`/api/admin/exams/${id}`, { method: "DELETE" }),
+    setBands: (id: number, bands: BandRow[]) => request<ExamAdminDetail>(`/api/admin/exams/${id}/bands`, { method: "PUT", body: { bands } }),
+    addSection: (examId: number, data: SectionInput) => request<{ id: number }>(`/api/admin/exams/${examId}/sections`, { method: "POST", body: data }),
+    updateSection: (id: number, data: SectionInput) => request<void>(`/api/admin/exams/sections/${id}`, { method: "PUT", body: data }),
+    deleteSection: (id: number) => request<void>(`/api/admin/exams/sections/${id}`, { method: "DELETE" }),
+    addQuestion: (sectionId: number, data: ExamQuestionInput) => request<{ id: number }>(`/api/admin/exams/sections/${sectionId}/questions`, { method: "POST", body: data }),
+    updateQuestion: (id: number, data: ExamQuestionInput) => request<void>(`/api/admin/exams/questions/${id}`, { method: "PUT", body: data }),
+    deleteQuestion: (id: number) => request<void>(`/api/admin/exams/questions/${id}`, { method: "DELETE" }),
+    // maqolalar
+    posts: (params: { search?: string } = {}) => request<Page<PostListItem>>(`/api/admin/posts${qs({ ...params, size: 50 })}`),
+    post: (id: number) => request<PostDetail>(`/api/admin/posts/${id}`),
+    createPost: (data: PostInput) => request<PostDetail>("/api/admin/posts", { method: "POST", body: data }),
+    updatePost: (id: number, data: PostInput) => request<PostDetail>(`/api/admin/posts/${id}`, { method: "PUT", body: data }),
+    deletePost: (id: number) => request<void>(`/api/admin/posts/${id}`, { method: "DELETE" }),
+  },
 };
 
-export const Exams = {
-  list: () => api<ExamSummary[]>("/api/exams"),
-  get: (id: number | string) => api<ExamDetail>(`/api/exams/${id}`),
-};
+export interface CourseInput {
+  title: string;
+  shortDescription: string;
+  description: string;
+  thumbnailUrl: string | null;
+  level: string;
+  price: number;
+  categoryId: number | null;
+  published: boolean;
+  featured: boolean;
+}
 
-export const Attempts = {
-  start: (examId: number) => api<AttemptView>("/api/attempts", { method: "POST", body: JSON.stringify({ examId }) }),
-  get: (id: number | string) => api<AttemptView>(`/api/attempts/${id}`),
-  mine: () => api<AttemptView[]>("/api/attempts"),
-  answer: (id: number | string, questionId: number, response: AnswerResponse) =>
-    api<void>(`/api/attempts/${id}/answers`, { method: "PUT", body: JSON.stringify({ questionId, response }) }),
-  submit: (id: number | string) => api<AttemptResult>(`/api/attempts/${id}/submit`, { method: "POST" }),
-  result: (id: number | string) => api<AttemptResult>(`/api/attempts/${id}/result`),
-};
+export interface LessonInput {
+  title: string;
+  content: string;
+  videoUrl: string | null;
+  durationMinutes: number;
+  position?: number | null;
+  preview: boolean;
+}
+
+export interface QuizInput {
+  title: string;
+  description: string;
+  passScore: number;
+  lessonId: number | null;
+  questions: { text: string; options: { text: string; correct: boolean }[] }[];
+}
+
+export interface ExamInput {
+  code: string;
+  title: string;
+  description: string;
+  level: string;
+  featured: boolean;
+  published: boolean;
+  categoryId: number | null;
+}
+
+export interface SectionInput {
+  title: string;
+  orderIndex: number;
+  durationMinutes: number;
+  audioKey?: string | null;
+}
+
+export interface ExamQuestionInput {
+  orderIndex: number;
+  type: QuestionType;
+  prompt: string;
+  passage: string | null;
+  options: { key: string; text: string }[] | null;
+  accepted: string[];
+  points: number;
+}
+
+export interface PostInput {
+  title: string;
+  excerpt: string;
+  content: string;
+  coverUrl: string | null;
+  categoryId: number | null;
+  published: boolean;
+}

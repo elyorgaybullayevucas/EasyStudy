@@ -111,7 +111,8 @@ public class AuthService {
     }
 
     public static UserResponse toUser(User u) {
-        return new UserResponse(u.getId(), u.getEmail(), u.getFullName(), u.getRole().name());
+        return new UserResponse(u.getId(), u.getEmail(), u.getFullName(), u.getRole().name(), u.getCreatedAt(),
+                u.getHeadline(), u.getBio(), u.getAvatarUrl());
     }
 
     private static String sha256(String s) {

@@ -22,6 +22,7 @@ public class AuthController {
 
     private final AuthService auth;
     private final AppProperties props;
+    private final uz.easystudy.service.ProfileService profile;
 
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> register(@Valid @RequestBody RegisterRequest r, HttpServletRequest req) {
@@ -50,7 +51,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public UserResponse me(@AuthenticationPrincipal AuthPrincipal me) {
-        return new UserResponse(me.id(), me.email(), null, me.role().name());
+        return profile.me(me.id());
     }
 
     private ResponseEntity<TokenResponse> withCookie(AuthService.Session s) {

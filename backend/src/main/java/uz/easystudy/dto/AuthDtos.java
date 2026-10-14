@@ -19,5 +19,6 @@ public final class AuthDtos {
 
     public record TokenResponse(String accessToken, long expiresIn, UserResponse user) {}
 
-    public record UserResponse(Long id, String email, String fullName, String role) {}
+    public record UserResponse(Long id, String email, String fullName, String role, java.time.Instant createdAt,
+                               String headline, String bio, String avatarUrl) {}
 }
