@@ -1,0 +1,7 @@
+node_modules
+# Docker build konteksti uchun (.dockerignore ham shu ro'yxatni ishlatadi)
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+.env*.local

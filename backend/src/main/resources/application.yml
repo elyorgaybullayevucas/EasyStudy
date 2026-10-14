@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: examprep
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/examprep}
+    username: ${SPRING_DATASOURCE_USERNAME:examprep}
+    password: ${SPRING_DATASOURCE_PASSWORD:examprep_dev_pw}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-stacktrace: never
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    access-ttl-minutes: 15
+    refresh-ttl-days: 7
+  cors:
+    origins: ${APP_CORS_ORIGINS:http://localhost:3000}
+  cookie:
+    secure: ${APP_COOKIE_SECURE:false}
+  demo:
+    admin-email: ${APP_DEMO_ADMIN_EMAIL:admin@examprep.uz}
+    admin-password: ${APP_DEMO_ADMIN_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
