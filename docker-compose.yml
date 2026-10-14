@@ -1,16 +1,18 @@
+name: easystudy
+
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: examprep
-      POSTGRES_USER: examprep
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-examprep_dev_pw}
+      POSTGRES_DB: easystudy
+      POSTGRES_USER: easystudy
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-easystudy_dev_pw}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5433:5432"   # host 5433: lokal PostgreSQL 18 allaqachon 5432 da
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U examprep"]
+      test: ["CMD-SHELL", "pg_isready -U easystudy"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,12 +23,12 @@ services:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/examprep
-      SPRING_DATASOURCE_USERNAME: examprep
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-examprep_dev_pw}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/easystudy
+      SPRING_DATASOURCE_USERNAME: easystudy
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-easystudy_dev_pw}
       APP_JWT_SECRET: ${JWT_SECRET:-change-me-to-a-64-byte-random-base64-secret-change-me-change-me-now}
       APP_CORS_ORIGINS: http://localhost:3000
-      APP_DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@examprep.uz}
+      APP_DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@easystudy.uz}
       APP_DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-}
     ports:
       - "8080:8080"

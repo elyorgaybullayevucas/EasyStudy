@@ -1,10 +1,10 @@
 spring:
   application:
-    name: examprep
+    name: easystudy
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/examprep}
-    username: ${SPRING_DATASOURCE_USERNAME:examprep}
-    password: ${SPRING_DATASOURCE_PASSWORD:examprep_dev_pw}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/easystudy}
+    username: ${SPRING_DATASOURCE_USERNAME:easystudy}
+    password: ${SPRING_DATASOURCE_PASSWORD:easystudy_dev_pw}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -33,7 +33,7 @@ app:
   cookie:
     secure: ${APP_COOKIE_SECURE:false}
   demo:
-    admin-email: ${APP_DEMO_ADMIN_EMAIL:admin@examprep.uz}
+    admin-email: ${APP_DEMO_ADMIN_EMAIL:admin@easystudy.uz}
     admin-password: ${APP_DEMO_ADMIN_PASSWORD:}
 
 management:

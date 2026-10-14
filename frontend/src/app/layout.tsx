@@ -4,7 +4,7 @@ import { AuthProvider } from "@/lib/auth";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "ExamPrep - IELTS, SAT, TOPIK mock testlar",
+  title: "EasyStudy - IELTS, SAT, TOPIK mock testlar",
   description: "Xalqaro sertifikatlarga tayyorlov va mock imtihon platformasi",
 };
 

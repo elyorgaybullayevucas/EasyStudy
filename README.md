@@ -1,4 +1,4 @@
-# ExamPrep – xalqaro sertifikatlarga tayyorlov va mock imtihon platformasi
+# EasyStudy – xalqaro sertifikatlarga tayyorlov va mock imtihon platformasi
 
 Stek: Spring Boot 3 (Java 21) + PostgreSQL 16 + Next.js 15 (TypeScript).
 
@@ -29,7 +29,7 @@ cd frontend && npm install && npm run dev
 - Frontend: http://localhost:3000, API: http://localhost:8080, Swagger: http://localhost:8080/swagger-ui.html
 - Docker'dagi PostgreSQL host'da **5433** portda (lokal PostgreSQL 18 allaqachon 5432 ni band qilgan).
 - Image'lar `mirror.gcr.io` orqali tortiladi, chunki `auth.docker.io` bu tarmoqda ochilmaydi. Qatlam yuklanishi uzilsa (`short read`), buyruqni qayta ishga tushiring.
-- Bazaga ulanish: `docker exec -it examprep-db-1 psql -U examprep -d examprep`
+- Bazaga ulanish: `docker exec -it easystudy-db-1 psql -U easystudy -d easystudy`
 
 ## Holat
 

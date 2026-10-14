@@ -11,10 +11,10 @@
     <relativePath/>
   </parent>
 
-  <groupId>uz.examprep</groupId>
-  <artifactId>examprep-backend</artifactId>
+  <groupId>uz.easystudy</groupId>
+  <artifactId>easystudy-backend</artifactId>
   <version>0.1.0</version>
-  <name>examprep-backend</name>
+  <name>easystudy-backend</name>
 
   <properties>
     <java.version>21</java.version>
