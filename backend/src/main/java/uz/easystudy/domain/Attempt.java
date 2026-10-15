@@ -41,4 +41,8 @@ public class Attempt {
 
     @Column(name = "scaled_score", precision = 7, scale = 2)
     private BigDecimal scaledScore;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_status", nullable = false, length = 20)
+    private AiStatus aiStatus = AiStatus.NONE;
 }

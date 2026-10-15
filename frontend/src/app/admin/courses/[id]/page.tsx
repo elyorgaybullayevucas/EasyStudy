@@ -48,7 +48,7 @@ export default function EditCoursePage() {
       <section>
         <h2 className="mb-4 text-lg font-semibold">Asosiy ma&apos;lumotlar</h2>
         <CourseForm key={course.updatedAt}
-          initial={{ title: course.title, shortDescription: course.shortDescription, description: course.description, thumbnailUrl: course.thumbnailUrl, level: course.level, price: course.price, categoryId: course.category?.id ?? null, published: course.published, featured: course.featured }}
+          initial={{ title: course.title, shortDescription: course.shortDescription, description: course.description, thumbnailUrl: course.thumbnailUrl, level: course.level, price: course.price, categoryId: course.category?.id ?? null, published: course.published, featured: course.featured, finalExamId: course.finalExam?.id ?? null }}
           submitLabel="O'zgarishlarni saqlash" onSubmit={async (data) => { setCourse(await api.admin.updateCourse(course.id, data)); }} />
       </section>
 

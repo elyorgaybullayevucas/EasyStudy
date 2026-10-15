@@ -52,6 +52,11 @@ public class Course {
     @JoinColumn(name = "instructor_id")
     private User instructor;
 
+    /** Kurs yakunidagi to'liq mock imtihon. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "final_exam_id")
+    private Exam finalExam;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 

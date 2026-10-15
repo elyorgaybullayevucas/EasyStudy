@@ -65,9 +65,13 @@ export default function GradingDetailPage() {
           <div key={q.questionId} className="card p-6">
             <p className="text-xs font-semibold tracking-wider text-slate-500 uppercase">{q.sectionTitle} · {i + 1}-vazifa · maks {q.maxPoints} ball</p>
             <p className="mt-2 whitespace-pre-line font-medium">{q.prompt}</p>
+            {q.aiGraded && <p className="mt-2 text-xs text-violet-700">AI baholagan: {q.points} ball. Ballni o&apos;zgartirsangiz sizning bahoyingiz hisobga olinadi.</p>}
             <div className="mt-4 rounded-xl bg-slate-50 p-4">
               {q.type === "SPEAKING" ? (
-                q.audioUrl ? <audio src={q.audioUrl} controls className="w-full" /> : <p className="text-sm text-slate-500">Talaba ovozli javob yubormagan.</p>
+                <>
+                  {q.audioUrl ? <audio src={q.audioUrl} controls className="w-full" /> : <p className="text-sm text-slate-500">Talaba ovozli javob yubormagan.</p>}
+                  {q.transcript && <p className="mt-3 whitespace-pre-line text-sm text-slate-700"><b>Transkript:</b> {q.transcript}</p>}
+                </>
               ) : text ? (
                 <><p className="whitespace-pre-line text-sm leading-relaxed">{text}</p><p className="mt-2 text-xs text-slate-500">{wordCount(text)} so&apos;z</p></>
               ) : <p className="text-sm text-slate-500">Talaba javob yozmagan.</p>}

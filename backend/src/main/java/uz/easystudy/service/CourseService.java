@@ -26,6 +26,7 @@ public class CourseService {
     private final QuizRepository quizzes;
     private final EnrollmentRepository enrollments;
     private final UserRepository users;
+    private final ExamRepository exams;
     private final CategoryService categoryService;
     private final uz.easystudy.media.MediaService media;
 
@@ -67,8 +68,14 @@ public class CourseService {
                 counts.getOrDefault(q.getId(), 0L))).toList();
     }
 
+    public static ExamBrief examBrief(Exam e) {
+        if (e == null || !e.isPublished()) return null;
+        return new ExamBrief(e.getId(), e.getTitle(), e.getSections().stream().mapToInt(Section::getDurationMinutes).sum(),
+                e.getSections().stream().mapToInt(s -> s.getQuestions().size()).sum());
+    }
+
     public static LessonBrief lessonBrief(Lesson l) {
-        return new LessonBrief(l.getId(), l.getTitle(), l.getDurationMinutes(), l.getPosition(), l.isPreview());
+        return new LessonBrief(l.getId(), l.getTitle(), l.getDurationMinutes(), l.getPosition(), l.isPreview(), examBrief(l.getExam()));
     }
 
     /** Platformadagi video bo'lsa vaqtli imzolangan havola; aks holda tashqi havola. */
@@ -86,7 +93,7 @@ public class CourseService {
             source = null;
         }
         return new LessonOut(l.getId(), l.getCourse().getId(), l.getTitle(), l.getContent(), url, source, l.getVideoKey(),
-                l.getDurationMinutes(), l.getPosition(), l.isPreview());
+                l.getDurationMinutes(), l.getPosition(), l.isPreview(), examBrief(l.getExam()));
     }
 
     public boolean canManage(AuthPrincipal me, Course c) {
@@ -134,7 +141,7 @@ public class CourseService {
                 c.getThumbnailUrl(), c.getLevel(), c.getPrice(), c.isFeatured(), c.isPublished(),
                 CategoryService.brief(c.getCategory()), instructor(c.getInstructor()), s[0], s[1], s[2],
                 c.getCreatedAt(), c.getUpdatedAt(),
-                c.getLessons().stream().map(CourseService::lessonBrief).toList(), quizBriefs(c), enrolled);
+                c.getLessons().stream().map(CourseService::lessonBrief).toList(), quizBriefs(c), enrolled, examBrief(c.getFinalExam()));
     }
 
     // ---------------- admin / teacher ----------------
@@ -157,7 +164,8 @@ public class CourseService {
                 c.getThumbnailUrl(), c.getLevel(), c.getPrice(), c.isFeatured(), c.isPublished(),
                 CategoryService.brief(c.getCategory()), instructor(c.getInstructor()), s[0], s[1], s[2],
                 c.getCreatedAt(), c.getUpdatedAt(),
-                c.getLessons().stream().map(this::lessonOut).toList(), quizBriefs(c));
+                c.getLessons().stream().map(this::lessonOut).toList(), quizBriefs(c),
+                c.getFinalExam() == null ? null : new ExamBrief(c.getFinalExam().getId(), c.getFinalExam().getTitle(), 0, 0));
     }
 
     @Transactional(readOnly = true)
@@ -197,6 +205,7 @@ public class CourseService {
         c.setCategory(categoryService.require(in.categoryId()));
         c.setPublished(in.published());
         c.setFeatured(in.featured());
+        c.setFinalExam(in.finalExamId() == null ? null : exams.findById(in.finalExamId()).orElseThrow(() -> AppException.badRequest("Imtihon topilmadi")));
     }
 
     @Transactional
@@ -249,6 +258,7 @@ public class CourseService {
         l.setDurationMinutes(in.durationMinutes());
         if (in.position() != null) l.setPosition(in.position());
         l.setPreview(in.preview());
+        l.setExam(in.examId() == null ? null : exams.findById(in.examId()).orElseThrow(() -> AppException.badRequest("Imtihon topilmadi")));
     }
 
     private static String blankToNull(String s) {

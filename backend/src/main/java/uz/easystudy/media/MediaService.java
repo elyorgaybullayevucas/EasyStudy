@@ -90,6 +90,17 @@ public class MediaService {
         return r;
     }
 
+    /** Server ichida o'qish (AI transkripsiya uchun); lokal rejimda fayl, S3 da vaqtli havola orqali. */
+    public Resource openInternal(String key) {
+        if (key == null || key.isBlank()) return null;
+        if (local != null) return local.resource(key);
+        try {
+            return new org.springframework.core.io.UrlResource(storage.url(key, Duration.ofMinutes(10)));
+        } catch (java.net.MalformedURLException e) {
+            return null;
+        }
+    }
+
     public static String contentTypeFor(String key) {
         String ext = key.substring(key.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
         return switch (ext) {

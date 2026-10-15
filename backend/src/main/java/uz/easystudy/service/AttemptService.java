@@ -36,6 +36,8 @@ public class AttemptService {
     private final AuditService audit;
     private final MediaService media;
     private final ExamService examService;
+    private final org.springframework.beans.factory.ObjectProvider<uz.easystudy.ai.AiGradingService> aiGrading; // sikl bog'liqlikni oldini olish
+    private final org.springframework.beans.factory.ObjectProvider<uz.easystudy.ai.AiGradingWorker> aiWorker;
 
     // ---------------- boshlash ----------------
 
@@ -216,6 +218,30 @@ public class AttemptService {
         a.setSubmittedAt(Instant.now());
         a.setStatus(pending ? AttemptStatus.SUBMITTED : AttemptStatus.GRADED);
         for (AttemptSection st : attemptSections.findByAttemptId(a.getId())) if (st.getFinishedAt() == null) st.setFinishedAt(Instant.now());
+        if (pending) {
+            uz.easystudy.ai.AiGradingService ai = aiGrading.getIfAvailable();
+            uz.easystudy.ai.AiGradingWorker worker = aiWorker.getIfAvailable();
+            if (ai != null && ai.enabled() && worker != null) {
+                a.setAiStatus(AiStatus.PENDING);
+                final Long id = a.getId();
+                // Commit'dan keyin fonda: aks holda worker hali yozilmagan ma'lumotni o'qiydi
+                if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+                    org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                            new org.springframework.transaction.support.TransactionSynchronization() {
+                                @Override public void afterCommit() { worker.run(id); }
+                            });
+                } else {
+                    worker.run(id);
+                }
+            }
+        }
+    }
+
+    /** AI yoki o'qituvchi baholagach: bo'lim va umumiy natijani qayta hisoblash, holatni yangilash. */
+    public void recomputeAfterGrading(Attempt a) {
+        Map<Long, Answer> byQ = answers.findByAttemptId(a.getId()).stream().collect(Collectors.toMap(x -> x.getQuestion().getId(), Function.identity()));
+        boolean pending = recompute(a, byQ);
+        if (!pending && a.getStatus() == AttemptStatus.SUBMITTED) a.setStatus(AttemptStatus.GRADED);
     }
 
     /** Bo'lim va umumiy ballarni hisoblaydi. @return qo'lda tekshirilmagan savol qolganmi */
@@ -310,6 +336,12 @@ public class AttemptService {
 
     // ---------------- o'qituvchi tekshiruvi ----------------
 
+    /** Admin uchun: AI tekshiruv holati. */
+    public List<String> aiStatus() {
+        uz.easystudy.ai.AiGradingService ai = aiGrading.getIfAvailable();
+        return ai == null ? List.of("grader=none") : ai.status();
+    }
+
     @Transactional(readOnly = true)
     public List<GradingRow> gradingQueue(AuthPrincipal me, boolean includeGraded) {
         List<AttemptStatus> statuses = includeGraded ? List.of(AttemptStatus.SUBMITTED, AttemptStatus.GRADED, AttemptStatus.EXPIRED) : List.of(AttemptStatus.SUBMITTED);
@@ -322,9 +354,11 @@ public class AttemptService {
     }
 
     private GradingRow gradingRow(Attempt a) {
-        long pending = answers.findByAttemptId(a.getId()).stream().filter(x -> x.getQuestion().getType().isManual() && x.getPoints() == null).count();
+        List<Answer> list = answers.findByAttemptId(a.getId());
+        long pending = list.stream().filter(x -> x.getQuestion().getType().isManual() && x.getPoints() == null).count();
+        boolean ai = list.stream().anyMatch(Answer::isAiGraded);
         return new GradingRow(a.getId(), a.getExam().getId(), a.getExam().getTitle(), a.getUser().getFullName(), a.getUser().getEmail(),
-                a.getSubmittedAt(), a.getStatus(), (int) pending);
+                a.getSubmittedAt(), a.getStatus(), (int) pending, ai, a.getAiStatus());
     }
 
     private Attempt managedAttempt(Long attemptId, AuthPrincipal me) {
@@ -344,7 +378,8 @@ public class AttemptService {
                 Answer ans = byQ.get(q.getId());
                 String audio = ans != null && ans.getResponse() != null && ans.getResponse().get("audioKey") instanceof String k ? media.url(k) : null;
                 qs.add(new GradingQuestion(q.getId(), s.getId(), s.getTitle(), q.getType(), q.getPrompt(), q.getPoints(),
-                        ans == null ? null : ans.getResponse(), audio, ans == null ? null : ans.getPoints(), ans == null ? null : ans.getFeedback()));
+                        ans == null ? null : ans.getResponse(), audio, ans == null ? null : ans.getPoints(), ans == null ? null : ans.getFeedback(),
+                        ans != null && ans.isAiGraded(), ans == null ? null : ans.getTranscript()));
             }
         }
         return new GradingAttempt(gradingRow(a), qs);
@@ -373,6 +408,7 @@ public class AttemptService {
             ans.setIsCorrect(it.points().signum() > 0);
             ans.setFeedback(it.feedback());
             ans.setGradedBy(me.id());
+            ans.setAiGraded(false); // o'qituvchi bahosi AI bahosi ustidan yoziladi
             ans.setUpdatedAt(Instant.now());
             answers.save(ans);
         }
@@ -402,7 +438,8 @@ public class AttemptService {
                 String audio = ans != null && ans.getResponse() != null && ans.getResponse().get("audioKey") instanceof String k ? media.url(k) : null;
                 rows.add(new AnswerResult(q.getId(), s.getId(), q.getType(), ans == null ? null : ans.getResponse(),
                         ans == null ? (q.getType().isManual() ? null : Boolean.FALSE) : ans.getIsCorrect(),
-                        ans == null ? BigDecimal.ZERO : ans.getPoints(), q.getPoints(), ans == null ? null : ans.getFeedback(), audio, pending));
+                        ans == null ? BigDecimal.ZERO : ans.getPoints(), q.getPoints(), ans == null ? null : ans.getFeedback(), audio, pending,
+                        ans != null && ans.isAiGraded()));
             }
             secs.add(new SectionResult(s.getId(), s.getTitle(), s.getPartType(), st == null ? null : st.getRawScore(),
                     st == null ? null : st.getMaxScore(), st == null ? null : st.getScaledScore(), secPending));
@@ -410,7 +447,7 @@ public class AttemptService {
         List<BandConversion> all = bands.findByExamIdOrderBySectionIdAscMinRawAsc(a.getExam().getId());
         BigDecimal labelKey = a.getExam().getScoringMode() == ScoringMode.TOTAL ? a.getRawScore() : a.getScaledScore();
         return new AttemptResult(a.getId(), a.getExam().getId(), a.getExam().getTitle(), a.getExam().getScoringMode(), a.getStatus(),
-                a.getRawScore(), max.setScale(2, RoundingMode.HALF_UP), a.getScaledScore(), label(all, labelKey), pendingCount, secs, rows);
+                a.getRawScore(), max.setScale(2, RoundingMode.HALF_UP), a.getScaledScore(), label(all, labelKey), pendingCount, a.getAiStatus(), secs, rows);
     }
 
     private AttemptView toView(Attempt a) {

@@ -27,6 +27,12 @@ const general: Step[] = [
     "Yozma javob (Writing): maks. ball va minimal so'z sonini kiriting. Siz \"Tekshirish navbati\"da baholaysiz.",
     "Ovozli javob (Speaking): tayyorlanish va javob vaqtini soniyada kiriting. Talaba brauzerda bir marta yozadi; siz eshitib baholaysiz.",
   ] },
+  { title: "AI tekshiruv (Writing va Speaking)", items: [
+    "Talaba topshirgach Writing javoblari darhol AI tomonidan rasmiy mezonlar (IELTS band descriptors, CEFR, TOPIK) asosida baholanadi va izoh bilan natijada ko'rinadi; umumiy band shu zahoti hisoblanadi.",
+    "Speaking: audio avval matnga aylantiriladi (transkripsiya sozlangan bo'lsa), so'ng AI baholaydi; sozlanmagan bo'lsa Speaking sizning tekshiruvingizga qoladi.",
+    "AI bahosi 'Tekshirish navbati → Barchasi' da ko'rinadi (AI baholagan belgisi). Ballni o'zgartirsangiz sizning bahoyingiz yakuniy bo'ladi va natija qayta hisoblanadi.",
+    "Vazifa matnini aniq yozing (mavzu, talab, so'z soni): AI aynan shu topshiriqqa nisbatan baholaydi.",
+  ] },
   { title: "Baholash usullari", items: [
     "Umumiy ball: barcha xom ballar qo'shiladi, umumiy jadval orqali daraja (TOPIK, DTM, Milliy fan).",
     "Bo'limlar o'rtachasi: har bo'lim o'z jadvali bilan band oladi, umumiy = o'rtacha, IELTS qoidasi bilan .5 ga yaxlitlanadi (IELTS, Milliy ingliz tili).",

@@ -39,4 +39,9 @@ public class Lesson {
     /** Ro'yxatdan o'tmaganlarga ham ochiq tanishuv darsi. */
     @Column(nullable = false)
     private boolean preview = false;
+
+    /** Shu mavzu bo'yicha mock (bo'lim mashqi): darsdan keyin tavsiya etiladi. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exam_id")
+    private Exam exam;
 }

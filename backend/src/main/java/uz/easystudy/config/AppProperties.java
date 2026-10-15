@@ -10,7 +10,7 @@ import java.util.List;
 
 @Validated
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(Jwt jwt, Cors cors, Cookie cookie, Demo demo, Media media) {
+public record AppProperties(Jwt jwt, Cors cors, Cookie cookie, Demo demo, Media media, Ai ai) {
 
     public record Jwt(
             @NotBlank @Size(min = 32, message = "JWT secret kamida 32 belgidan iborat bo'lishi kerak") String secret,
@@ -31,4 +31,12 @@ public record AppProperties(Jwt jwt, Cors cors, Cookie cookie, Demo demo, Media 
                         int urlTtlMinutes, S3 s3) {}
 
     public record S3(String endpoint, String publicEndpoint, String bucket, String accessKey, String secretKey, String region) {}
+
+    /**
+     * AI tekshiruv. provider = none (faqat o'qituvchi), claude (Anthropic API), fake (lokal sinov: deterministik baho).
+     * transcription = none | openai (Whisper): Speaking audio -> matn; none bo'lsa Speaking o'qituvchiga qoladi.
+     */
+    public record Ai(String provider, String apiKey, String model, Transcription transcription) {}
+
+    public record Transcription(String provider, String apiKey, String model) {}
 }

@@ -64,7 +64,11 @@ export default async function CoursePage({ params }: Props) {
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{lesson.title}</p>
-                    {lesson.preview && <span className="text-xs font-medium text-accent-600">Bepul ko&apos;rish mumkin</span>}
+                    <p className="text-xs text-slate-500">
+                      {lesson.preview && <span className="font-medium text-accent-600">Bepul ko&apos;rish mumkin</span>}
+                      {lesson.preview && lesson.exam && " · "}
+                      {lesson.exam && <span>+ mavzu mock&apos;i: {lesson.exam.title}</span>}
+                    </p>
                   </div>
                   <span className="flex shrink-0 items-center gap-1 text-sm text-slate-500"><PlayIcon width={14} height={14} /> {lesson.durationMinutes} daq</span>
                 </li>
@@ -78,6 +82,16 @@ export default async function CoursePage({ params }: Props) {
                   </div>
                 </li>
               ))}
+              {course.finalExam && (
+                <li className="flex items-center gap-4 bg-emerald-50/60 px-5 py-4">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><AwardIcon width={16} height={16} /></span>
+                  <div className="flex-1">
+                    <p className="font-medium">Yakuniy mock imtihon: {course.finalExam.title}</p>
+                    <p className="text-xs text-slate-500">{course.finalExam.totalMinutes} daqiqa • {course.finalExam.questionCount} savol / vazifa • haqiqiy format</p>
+                  </div>
+                  <Link href={`/exams/${course.finalExam.id}`} className="btn-secondary py-1.5">Ko&apos;rish</Link>
+                </li>
+              )}
             </ol>
           </section>
           <section className="card flex items-start gap-4 p-6">

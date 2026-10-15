@@ -185,6 +185,7 @@ export const api = {
     deleteSection: (id: number) => request<void>(`/api/admin/exams/sections/${id}`, { method: "DELETE" }),
     // tekshirish navbati
     grading: (all = false) => request<GradingRow[]>(`/api/admin/grading${qs({ all })}`),
+    aiStatus: () => request<string[]>("/api/admin/grading/ai-status"),
     gradingAttempt: (attemptId: number) => request<GradingAttempt>(`/api/admin/grading/${attemptId}`),
     grade: (attemptId: number, items: { questionId: number; points: number; feedback?: string }[]) =>
       request<GradingAttempt>(`/api/admin/grading/${attemptId}`, { method: "POST", body: { items } }),
@@ -210,6 +211,7 @@ export interface CourseInput {
   categoryId: number | null;
   published: boolean;
   featured: boolean;
+  finalExamId?: number | null;
 }
 
 export interface LessonInput {
@@ -220,6 +222,7 @@ export interface LessonInput {
   durationMinutes: number;
   position?: number | null;
   preview: boolean;
+  examId?: number | null;
 }
 
 export type MediaKind = "VIDEO" | "AUDIO" | "IMAGE";

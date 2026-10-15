@@ -46,4 +46,11 @@ public class Answer {
 
     @Column(name = "graded_by")
     private Long gradedBy;
+
+    @Column(name = "ai_graded", nullable = false)
+    private boolean aiGraded = false;
+
+    /** Speaking audio transkripti (AI tekshiruv uchun). */
+    @Column(columnDefinition = "text")
+    private String transcript;
 }

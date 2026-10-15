@@ -28,6 +28,11 @@ public class AdminGradingController {
         return attempts.gradingQueue(me, all);
     }
 
+    @GetMapping("/ai-status")
+    public List<String> aiStatus() {
+        return attempts.aiStatus();
+    }
+
     @GetMapping("/{attemptId}")
     public GradingAttempt get(@PathVariable Long attemptId, @AuthenticationPrincipal AuthPrincipal me) {
         return attempts.gradingDetail(attemptId, me);

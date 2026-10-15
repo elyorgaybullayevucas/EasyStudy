@@ -17,7 +17,10 @@ Stek: Spring Boot 3 (Java 21) + PostgreSQL 16 + Next.js 15 (TypeScript, Tailwind
 - Sertifikat: kurs to'liq tugagach avtomatik, noyob kod, PDF chop etish, ochiq tekshirish sahifasi
 - Mock imtihonlar haqiqiy formatda: bo'limlar ketma-ket (har birining o'z taymeri, qaytib bo'lmaydi), Listening audio, Reading matnlari, Writing (so'z hisobi, minimal so'z), Speaking (brauzerda mikrofon orqali yozish, tayyorlanish/javob vaqti), avtosaqlash
 - Baholash: Listening/Reading avtomatik + bo'lim konversiya jadvali; Writing/Speaking o'qituvchi tekshiradi (ball + izoh); umumiy natija usuli: IELTS o'rtacha (.5 yaxlitlash), SAT yig'indi, TOPIK/DTM umumiy ball → daraja yorlig'i
-- Imtihon shablonlari: IELTS Academic/General, Digital SAT, TOPIK I/II, Milliy sertifikat (ingliz tili, fan), DTM (1.1/2.1/3.1 ball), Attestatsiya, bo'sh. Shablon bo'limlar, vaqt, ball, rasmiy konversiya jadvallari va Writing/Speaking vazifalarini tayyor beradi
+- Imtihon shablonlari: IELTS Academic/General, Digital SAT, TOPIK I/II, Milliy sertifikat (ingliz tili, fan), DTM (1.1/2.1/3.1 ball), Attestatsiya, bo'limli mashqlar (IELTS Listening/Reading/Writing/Speaking, DTM fan), bo'sh. Shablon bo'limlar, vaqt, ball, rasmiy konversiya jadvallari va Writing/Speaking vazifalarini tayyor beradi
+- **AI tekshiruv:** Writing (va transkripsiya bo'lsa Speaking) javoblari topshirilgach Claude tomonidan rasmiy mezonlar asosida darhol baholanadi, izoh bilan; umumiy band shu zahoti chiqadi. O'qituvchi keyin ko'rib ballni o'zgartirishi mumkin
+- **Tayyor real mock'lar:** IELTS Academic Full Mock 1 (Listening 20 savol + audio, Reading 2 matn 20 savol, Writing 2 task, Speaking 3 qism) va DTM Mock 1 (90 savol: ona tili, matematika, tarix, matematika-mutaxassislik, fizika)
+- **Kurs ↔ mock:** har darsga mavzu mock'i (bo'lim mashqi), kursga yakuniy to'liq mock bog'lanadi; o'quv rejimida darsdan keyin "Mock'ni topshirish" tugmasi
 - Shaxsiy kabinet: kurslarim, imtihon natijalarim (eng yaxshi natija), sertifikatlarim, profil
 
 **O'qituvchi** (`TEACHER` roli, `/admin`)
@@ -46,6 +49,25 @@ cd frontend && npm install && npm run dev
 - Image'lar `mirror.gcr.io` orqali tortiladi (`auth.docker.io` yopiq tarmoqlar uchun). Qatlam yuklanishi uzilsa buyruqni qayta bering.
 - Frontend'ni Docker'da qurish ham mumkin (`docker compose up --build`), lekin sekin tarmoqda `npm ci` uzilib qolishi mumkin.
 - Demo ma'lumotlar: 14 ta yo'nalish, IELTS Writing kursi (3 dars + test), IELTS Reading va SAT Math mock imtihonlari, 1 ta maqola. Demo admin `.env` dan.
+
+### AI tekshiruv
+
+| O'zgaruvchi | Qiymat | Izoh |
+|---|---|---|
+| `AI_PROVIDER` | `none` / `claude` / `fake` | `claude`: Anthropic API (`ANTHROPIC_API_KEY` shart), `fake`: lokal sinov (API'siz), `none`: faqat o'qituvchi |
+| `AI_MODEL` | `claude-opus-5-5` | standart; arzonroq variant `claude-sonnet-5-5` |
+| `TRANSCRIPTION_PROVIDER` | `none` / `openai` | Speaking audio → matn (Whisper, `OPENAI_API_KEY`); `none` bo'lsa Speaking o'qituvchiga qoladi |
+
+Narx taxmini (Claude Opus 5.5): bitta IELTS Writing task ≈ 1.5–2k token kirish + ~400 token chiqish ≈ $0.01–0.02; to'liq IELTS mock (2 writing + 3 speaking) ≈ $0.05–0.10. Whisper: $0.006/daqiqa.
+
+### Real mock materiallari
+
+- `backend/.../V9__seed_ielts_dtm_mocks.sql`: IELTS Academic Mock 1 va DTM Mock 1 (savollar, javob kalitlari, band jadvallari).
+- Listening audio: `scripts/listening/ielts-mock1.txt` transkripti → `make_audio.ps1` (Windows TTS) → WAV → `scripts/attach_media.py` bilan bo'limga biriktiriladi:
+
+```bash
+python scripts/attach_media.py --email admin@easystudy.uz --password '...' --exam-code IELTS_AC_MOCK_1 --section Listening --file scripts/listening/ielts-mock1.wav
+```
 
 ### Media saqlash
 

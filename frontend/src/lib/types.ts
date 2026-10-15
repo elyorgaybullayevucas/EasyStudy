@@ -52,12 +52,21 @@ export interface InstructorBrief {
   fullName: string;
 }
 
+export interface ExamBrief {
+  id: number;
+  title: string;
+  totalMinutes: number;
+  questionCount: number;
+}
+
 export interface LessonBrief {
   id: number;
   title: string;
   durationMinutes: number;
   position: number;
   preview: boolean;
+  /** Darsga bog'langan mavzu mock'i (bo'lim mashqi) */
+  exam: ExamBrief | null;
 }
 
 export interface Lesson extends LessonBrief {
@@ -101,6 +110,7 @@ export interface CourseDetail extends CourseListItem {
   lessons: LessonBrief[];
   quizzes: QuizBrief[];
   enrolled: boolean;
+  finalExam: ExamBrief | null;
 }
 
 export interface CourseAdminDetail extends Omit<CourseDetail, "lessons" | "enrolled"> {
@@ -298,6 +308,8 @@ export interface AttemptView {
   answers: Record<string, AnswerResponse>;
 }
 
+export type AiStatus = "NONE" | "PENDING" | "DONE" | "FAILED";
+
 export interface AnswerResult {
   questionId: number;
   sectionId: number;
@@ -309,6 +321,7 @@ export interface AnswerResult {
   feedback: string | null;
   audioUrl: string | null;
   pending: boolean;
+  aiGraded: boolean;
 }
 
 export interface SectionResult {
@@ -332,6 +345,7 @@ export interface AttemptResult {
   scaledScore: number | null;
   label: string | null;
   pendingCount: number;
+  aiStatus: AiStatus;
   sections: SectionResult[];
   answers: AnswerResult[];
 }
@@ -395,7 +409,7 @@ export interface TemplateSection {
 export interface TemplateInfo {
   code: string;
   title: string;
-  group: CategoryGroup;
+  group: CategoryGroup | "PRACTICE";
   description: string;
   scoringMode: ScoringMode;
   scoringNote: string;
@@ -412,6 +426,8 @@ export interface GradingRow {
   submittedAt: string | null;
   status: AttemptStatus;
   pendingCount: number;
+  aiGraded: boolean;
+  aiStatus: AiStatus;
 }
 
 export interface GradingQuestion {
@@ -425,6 +441,8 @@ export interface GradingQuestion {
   audioUrl: string | null;
   points: number | null;
   feedback: string | null;
+  aiGraded: boolean;
+  transcript: string | null;
 }
 
 export interface GradingAttempt {

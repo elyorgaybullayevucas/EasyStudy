@@ -92,11 +92,11 @@ export default function ExamEditorPage() {
         <section>
           <h2 className="mb-1 text-lg font-semibold">1. Imtihon formatini tanlang</h2>
           <p className="mb-4 text-sm text-slate-500">Shablon bo&apos;limlar, vaqt, ballar, konversiya jadvallari va Writing/Speaking vazifalarini tayyor beradi. Siz faqat materiallarni qo&apos;shasiz.</p>
-          {(["INTERNATIONAL", "LOCAL_CERT", "OTHER"] as const).map((g) => {
+          {(["INTERNATIONAL", "LOCAL_CERT", "PRACTICE", "OTHER"] as const).map((g) => {
             const items = templates.filter((t) => t.group === g);
             return items.length === 0 ? null : (
               <div key={g} className="mb-5">
-                <p className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">{groupLabels[g].title}</p>
+                <p className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">{g === "PRACTICE" ? "Bo'limli mashqlar (darsga bog'lash uchun)" : groupLabels[g].title}</p>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((t) => (
                     <button key={t.code} type="button" onClick={() => setTemplate(t.code)}

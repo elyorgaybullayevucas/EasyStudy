@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/Alert";
 import { api, ApiError, type LessonInput } from "@/lib/api";
-import type { Lesson } from "@/lib/types";
+import type { ExamSummary, Lesson } from "@/lib/types";
 
 import { MediaUpload } from "./MediaUpload";
 
-const emptyLesson: LessonInput = { title: "", content: "", videoUrl: "", videoKey: null, durationMinutes: 10, preview: false };
+const emptyLesson: LessonInput = { title: "", content: "", videoUrl: "", videoKey: null, durationMinutes: 10, preview: false, examId: null };
 
 export function LessonsManager({ courseId, lessons, onChange }: { courseId: number; lessons: Lesson[]; onChange: () => void }) {
   const [editing, setEditing] = useState<number | "new" | null>(null);
@@ -21,7 +21,7 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
           {lessons.map((l, i) => (
             <li key={l.id} className="px-5 py-4">
               {editing === l.id ? (
-                <LessonEditor initial={{ ...l, videoUrl: l.videoSource === "EXTERNAL" ? (l.videoUrl ?? "") : "", videoKey: l.videoKey }} onCancel={() => setEditing(null)}
+                <LessonEditor initial={{ ...l, videoUrl: l.videoSource === "EXTERNAL" ? (l.videoUrl ?? "") : "", videoKey: l.videoKey, examId: l.exam?.id ?? null }} onCancel={() => setEditing(null)}
                   onSave={async (data) => { await api.admin.updateLesson(l.id, data); setEditing(null); onChange(); }} />
               ) : (
                 <div className="flex flex-wrap items-center gap-4">
@@ -31,6 +31,7 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
                     <p className="truncate text-xs text-slate-500">
                       {l.durationMinutes} daq {l.preview && "• bepul"} •{" "}
                       {l.videoSource === "PLATFORM" ? <span className="text-emerald-700">platforma videosi</span> : l.videoSource === "EXTERNAL" ? "tashqi video" : "video yo'q"}
+                      {l.exam && <> · mock: <span className="text-brand-700">{l.exam.title}</span></>}
                     </p>
                   </div>
                   {confirmDelete === l.id ? (
@@ -64,9 +65,11 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
 }
 
 function LessonEditor({ initial, onSave, onCancel }: { initial: LessonInput & { position?: number | null }; onSave: (data: LessonInput) => Promise<void>; onCancel: () => void }) {
-  const [form, setForm] = useState<LessonInput>({ title: initial.title, content: initial.content, videoUrl: initial.videoUrl, videoKey: initial.videoKey, durationMinutes: initial.durationMinutes, preview: initial.preview, position: initial.position });
+  const [form, setForm] = useState<LessonInput>({ title: initial.title, content: initial.content, videoUrl: initial.videoUrl, videoKey: initial.videoKey, durationMinutes: initial.durationMinutes, preview: initial.preview, position: initial.position, examId: initial.examId ?? null });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [exams, setExams] = useState<ExamSummary[]>([]);
+  useEffect(() => { api.admin.exams().then(setExams).catch(() => undefined); }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +99,14 @@ function LessonEditor({ initial, onSave, onCancel }: { initial: LessonInput & { 
         </div>
       )}
       <div><label className="label">Dars matni / konspekt</label><textarea rows={5} className="input" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
+      <div>
+        <label className="label">Mavzu mock&apos;i (darsdan keyin tavsiya etiladigan bo&apos;lim mashqi, ixtiyoriy)</label>
+        <select className="input" value={form.examId ?? ""} onChange={(e) => setForm({ ...form, examId: e.target.value ? Number(e.target.value) : null })}>
+          <option value="">— Yo&apos;q —</option>
+          {exams.map((x) => <option key={x.id} value={x.id}>{x.title}{x.published ? "" : " (nashr etilmagan)"}</option>)}
+        </select>
+        <p className="mt-1 text-xs text-slate-500">Mock imtihonlar bo&apos;limida &quot;Bo&apos;limli mashqlar&quot; shablonidan yarating (masalan IELTS Listening mashqi), so&apos;ng shu yerda tanlang.</p>
+      </div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="accent-brand-600" checked={form.preview} onChange={(e) => setForm({ ...form, preview: e.target.checked })} />Bepul tanishuv darsi (ro&apos;yxatdan o&apos;tmaganlarga ham ochiq)</label>
       <div className="flex gap-2">
         <button disabled={saving} className="btn-primary">{saving ? "Saqlanmoqda..." : "Saqlash"}</button>

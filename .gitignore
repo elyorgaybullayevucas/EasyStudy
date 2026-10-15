@@ -21,3 +21,4 @@ frontend/out/
 *.rar
 hs_err_pid*
 replay_pid*
+scripts/listening/*.wav

@@ -30,24 +30,26 @@ public final class AttemptDtos {
 
     public record AnswerResult(Long questionId, Long sectionId, QuestionType type, Map<String, Object> response,
                                Boolean correct, BigDecimal points, BigDecimal maxPoints, String feedback,
-                               String audioUrl, boolean pending) {}
+                               String audioUrl, boolean pending, boolean aiGraded) {}
 
     public record SectionResult(Long sectionId, String title, PartType partType, BigDecimal rawScore, BigDecimal maxScore,
                                 BigDecimal scaledScore, boolean pending) {}
 
     public record AttemptResult(Long id, Long examId, String examTitle, ScoringMode scoringMode, AttemptStatus status,
                                 BigDecimal rawScore, BigDecimal maxScore, BigDecimal scaledScore, String label,
-                                int pendingCount, List<SectionResult> sections, List<AnswerResult> answers) {}
+                                int pendingCount, uz.easystudy.domain.AiStatus aiStatus,
+                                List<SectionResult> sections, List<AnswerResult> answers) {}
 
     // ---------- o'qituvchi tekshiruvi ----------
     public record GradingRow(Long attemptId, Long examId, String examTitle, String studentName, String studentEmail,
-                             Instant submittedAt, AttemptStatus status, int pendingCount) {}
+                             Instant submittedAt, AttemptStatus status, int pendingCount, boolean aiGraded,
+                             uz.easystudy.domain.AiStatus aiStatus) {}
 
     public record GradingAttempt(GradingRow summary, List<GradingQuestion> questions) {}
 
     public record GradingQuestion(Long questionId, Long sectionId, String sectionTitle, QuestionType type, String prompt,
                                   BigDecimal maxPoints, Map<String, Object> response, String audioUrl,
-                                  BigDecimal points, String feedback) {}
+                                  BigDecimal points, String feedback, boolean aiGraded, String transcript) {}
 
     public record GradeItem(@NotNull Long questionId, @NotNull BigDecimal points, String feedback) {}
     public record GradeRequest(@NotNull List<GradeItem> items) {}

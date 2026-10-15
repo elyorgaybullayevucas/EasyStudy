@@ -52,6 +52,14 @@ app:
       access-key: ${APP_S3_ACCESS_KEY:}
       secret-key: ${APP_S3_SECRET_KEY:}
       region: ${APP_S3_REGION:us-east-1}
+  ai:
+    provider: ${APP_AI_PROVIDER:none}            # none | claude | fake
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${APP_AI_MODEL:claude-opus-5-5}
+    transcription:
+      provider: ${APP_TRANSCRIPTION_PROVIDER:none}  # none | openai
+      api-key: ${OPENAI_API_KEY:}
+      model: ${APP_TRANSCRIPTION_MODEL:whisper-1}
 
 management:
   endpoints:

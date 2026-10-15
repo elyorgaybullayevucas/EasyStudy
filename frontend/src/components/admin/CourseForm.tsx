@@ -5,18 +5,20 @@ import { useEffect, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { api, ApiError, type CourseInput } from "@/lib/api";
 import { levelLabels } from "@/lib/format";
-import type { Category, CourseLevel } from "@/lib/types";
+import type { Category, CourseLevel, ExamSummary } from "@/lib/types";
 
-const empty: CourseInput = { title: "", shortDescription: "", description: "", thumbnailUrl: null, level: "BEGINNER", price: 0, categoryId: null, published: false, featured: false };
+const empty: CourseInput = { title: "", shortDescription: "", description: "", thumbnailUrl: null, level: "BEGINNER", price: 0, categoryId: null, published: false, featured: false, finalExamId: null };
 
 export function CourseForm({ initial, submitLabel, onSubmit }: { initial?: Partial<CourseInput>; submitLabel: string; onSubmit: (data: CourseInput) => Promise<void> }) {
   const [form, setForm] = useState<CourseInput>({ ...empty, ...initial });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [exams, setExams] = useState<ExamSummary[]>([]);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     api.admin.categories().then(setCategories).catch(() => undefined);
+    api.admin.exams().then(setExams).catch(() => undefined);
   }, []);
 
   const set = <K extends keyof CourseInput>(key: K, value: CourseInput[K]) => setForm((f) => ({ ...f, [key]: value }));
@@ -58,6 +60,13 @@ export function CourseForm({ initial, submitLabel, onSubmit }: { initial?: Parti
         <div><label className="label" htmlFor="price">Narx (so&apos;m, 0 = bepul)</label><input id="price" type="number" min={0} className="input" value={form.price} onChange={(e) => set("price", Number(e.target.value))} /></div>
       </div>
       <div><label className="label" htmlFor="thumb">Rasm havolasi (ixtiyoriy)</label><input id="thumb" type="url" className="input" placeholder="https://..." value={form.thumbnailUrl ?? ""} onChange={(e) => set("thumbnailUrl", e.target.value)} /></div>
+      <div>
+        <label className="label" htmlFor="final">Yakuniy mock imtihon (kurs oxirida tavsiya etiladi)</label>
+        <select id="final" className="input" value={form.finalExamId ?? ""} onChange={(e) => set("finalExamId", e.target.value ? Number(e.target.value) : null)}>
+          <option value="">— Yo&apos;q —</option>
+          {exams.map((x) => <option key={x.id} value={x.id}>{x.title}{x.published ? "" : " (nashr etilmagan)"}</option>)}
+        </select>
+      </div>
       <div className="flex flex-wrap gap-6">
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="accent-brand-600" checked={form.published} onChange={(e) => set("published", e.target.checked)} />Nashr etilgan (talabalarga ko&apos;rinadi)</label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="accent-brand-600" checked={form.featured} onChange={(e) => set("featured", e.target.checked)} />Mashhur kurslar qatorida</label>

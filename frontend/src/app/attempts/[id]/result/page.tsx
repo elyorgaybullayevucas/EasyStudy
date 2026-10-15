@@ -37,10 +37,19 @@ export default function ResultPage() {
       <p className="text-sm text-slate-500">Mock imtihon natijasi · {statusLabels[res.status]}</p>
       <h1 className="mt-1 text-3xl font-bold tracking-tight">{res.examTitle}</h1>
 
-      {res.pendingCount > 0 && (
+      {res.pendingCount > 0 && res.aiStatus === "PENDING" && (
+        <Alert type="info" className="mt-6">
+          Writing/Speaking javoblaringiz AI tomonidan baholanmoqda (odatda 1 daqiqagacha). Sahifani yangilang.
+          <button onClick={() => api.attempts.result(id).then(setRes).catch(() => undefined)} className="ml-3 font-semibold underline">Yangilash</button>
+        </Alert>
+      )}
+      {res.pendingCount > 0 && res.aiStatus !== "PENDING" && (
         <Alert type="info" className="mt-6">
           {res.pendingCount} ta Writing/Speaking javobi o&apos;qituvchi tomonidan tekshirilmoqda. Yakuniy natija tekshiruvdan so&apos;ng shu sahifada chiqadi.
         </Alert>
+      )}
+      {res.pendingCount === 0 && res.answers.some((a) => a.aiGraded) && (
+        <Alert type="success" className="mt-6">Writing/Speaking javoblari AI tomonidan baholandi; o&apos;qituvchi keyinroq ko&apos;rib ballni aniqlashtirishi mumkin.</Alert>
       )}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -86,7 +95,7 @@ export default function ResultPage() {
                   {a.type === "SPEAKING" ? (a.audioUrl ? <audio src={a.audioUrl} controls className="h-9 w-56" /> : "—")
                     : a.type === "ESSAY" ? <span className="line-clamp-3 whitespace-pre-line text-slate-700">{a.response?.text || "—"}</span>
                     : (a.response?.value ?? a.response?.values?.join(", ") ?? "—")}
-                  {a.feedback && <p className="mt-1 rounded bg-slate-50 p-2 text-xs text-slate-600"><b>O&apos;qituvchi:</b> {a.feedback}</p>}
+                  {a.feedback && <p className="mt-1 whitespace-pre-line rounded bg-slate-50 p-2 text-xs text-slate-600"><b>{a.aiGraded ? "AI baho" : "O'qituvchi"}:</b> {a.feedback}</p>}
                 </td>
                 <td className="px-4 py-3">
                   <span className={cn("badge", a.pending ? "bg-amber-50 text-amber-700" : a.correct === true ? "bg-emerald-50 text-emerald-700" : a.correct === false ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600")}>

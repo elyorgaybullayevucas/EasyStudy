@@ -18,11 +18,13 @@ public final class CourseDtos {
 
     public record InstructorBrief(Long id, String fullName) {}
 
-    public record LessonBrief(Long id, String title, int durationMinutes, int position, boolean preview) {}
+    public record ExamBrief(Long id, String title, int totalMinutes, int questionCount) {}
+
+    public record LessonBrief(Long id, String title, int durationMinutes, int position, boolean preview, ExamBrief exam) {}
 
     /** videoUrl: platformadagi video uchun vaqtli imzolangan havola, aks holda tashqi havola. */
     public record LessonOut(Long id, Long courseId, String title, String content, String videoUrl, String videoSource,
-                            String videoKey, int durationMinutes, int position, boolean preview) {}
+                            String videoKey, int durationMinutes, int position, boolean preview, ExamBrief exam) {}
 
     public record QuizBrief(Long id, String title, Long lessonId, int passScore, long questionCount) {}
 
@@ -36,7 +38,7 @@ public final class CourseDtos {
                                CategoryBrief category, InstructorBrief instructor,
                                long lessonCount, long totalMinutes, long studentCount,
                                Instant createdAt, Instant updatedAt,
-                               List<LessonBrief> lessons, List<QuizBrief> quizzes, boolean enrolled) {}
+                               List<LessonBrief> lessons, List<QuizBrief> quizzes, boolean enrolled, ExamBrief finalExam) {}
 
     /** Admin ko'rinishi: darslar to'liq (kontent va video bilan). */
     public record CourseAdminDetail(Long id, String title, String slug, String shortDescription, String description,
@@ -44,7 +46,7 @@ public final class CourseDtos {
                                     CategoryBrief category, InstructorBrief instructor,
                                     long lessonCount, long totalMinutes, long studentCount,
                                     Instant createdAt, Instant updatedAt,
-                                    List<LessonOut> lessons, List<QuizBrief> quizzes) {}
+                                    List<LessonOut> lessons, List<QuizBrief> quizzes, ExamBrief finalExam) {}
 
     // ---------- kirish DTO lari ----------
 
@@ -57,7 +59,8 @@ public final class CourseDtos {
             @Min(0) int price,
             Long categoryId,
             boolean published,
-            boolean featured) {}
+            boolean featured,
+            Long finalExamId) {}
 
     public record LessonInput(
             @NotBlank @Size(min = 2, max = 200) String title,
@@ -66,7 +69,8 @@ public final class CourseDtos {
             @Size(max = 255) String videoKey,
             @Min(0) int durationMinutes,
             Integer position,
-            boolean preview) {}
+            boolean preview,
+            Long examId) {}
 
     public record CategoryInput(
             @NotBlank @Size(min = 2, max = 100) String name,

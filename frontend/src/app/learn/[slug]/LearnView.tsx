@@ -147,6 +147,26 @@ export function LearnView({ slug }: { slug: string }) {
                       )}
                     </div>
                     {lesson.content && <div className="mt-6 leading-relaxed whitespace-pre-line text-slate-700">{lesson.content}</div>}
+                    {lesson.exam && (
+                      <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-brand-200 bg-brand-50 p-5">
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold tracking-wider text-brand-700 uppercase">Mavzu bo&apos;yicha mock</p>
+                          <p className="mt-1 font-semibold">{lesson.exam.title}</p>
+                          <p className="text-xs text-slate-600">{lesson.exam.totalMinutes} daqiqa · {lesson.exam.questionCount} savol · natija darhol</p>
+                        </div>
+                        <Link href={`/exams/${lesson.exam.id}`} className="btn-primary">Mock&apos;ni topshirish</Link>
+                      </div>
+                    )}
+                    {!nextLesson && course.finalExam && (
+                      <div className="mt-4 flex flex-wrap items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold tracking-wider text-emerald-700 uppercase">Kurs yakuni: to&apos;liq mock imtihon</p>
+                          <p className="mt-1 font-semibold">{course.finalExam.title}</p>
+                          <p className="text-xs text-slate-600">{course.finalExam.totalMinutes} daqiqa · {course.finalExam.questionCount} savol / vazifa</p>
+                        </div>
+                        <Link href={`/exams/${course.finalExam.id}`} className="btn bg-emerald-600 text-white hover:bg-emerald-700">Imtihonni boshlash</Link>
+                      </div>
+                    )}
                     {!progress?.enrolled && (
                       <Alert type="info" className="mt-6">Bu bepul tanishuv darsi. Barcha darslar, testlar va sertifikat uchun <button onClick={enroll} className="font-semibold underline">kursga yoziling</button>.</Alert>
                     )}
