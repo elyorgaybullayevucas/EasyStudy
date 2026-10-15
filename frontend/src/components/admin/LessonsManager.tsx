@@ -6,7 +6,9 @@ import { Alert } from "@/components/ui/Alert";
 import { api, ApiError, type LessonInput } from "@/lib/api";
 import type { Lesson } from "@/lib/types";
 
-const emptyLesson: LessonInput = { title: "", content: "", videoUrl: "", durationMinutes: 10, preview: false };
+import { MediaUpload } from "./MediaUpload";
+
+const emptyLesson: LessonInput = { title: "", content: "", videoUrl: "", videoKey: null, durationMinutes: 10, preview: false };
 
 export function LessonsManager({ courseId, lessons, onChange }: { courseId: number; lessons: Lesson[]; onChange: () => void }) {
   const [editing, setEditing] = useState<number | "new" | null>(null);
@@ -19,14 +21,17 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
           {lessons.map((l, i) => (
             <li key={l.id} className="px-5 py-4">
               {editing === l.id ? (
-                <LessonEditor initial={{ ...l, videoUrl: l.videoUrl ?? "" }} onCancel={() => setEditing(null)}
+                <LessonEditor initial={{ ...l, videoUrl: l.videoSource === "EXTERNAL" ? (l.videoUrl ?? "") : "", videoKey: l.videoKey }} onCancel={() => setEditing(null)}
                   onSave={async (data) => { await api.admin.updateLesson(l.id, data); setEditing(null); onChange(); }} />
               ) : (
                 <div className="flex flex-wrap items-center gap-4">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{l.title}</p>
-                    <p className="truncate text-xs text-slate-500">{l.durationMinutes} daq {l.preview && "• bepul"} {l.videoUrl ? "• video bor" : "• video yo'q"}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {l.durationMinutes} daq {l.preview && "• bepul"} •{" "}
+                      {l.videoSource === "PLATFORM" ? <span className="text-emerald-700">platforma videosi</span> : l.videoSource === "EXTERNAL" ? "tashqi video" : "video yo'q"}
+                    </p>
                   </div>
                   {confirmDelete === l.id ? (
                     <>
@@ -59,7 +64,7 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
 }
 
 function LessonEditor({ initial, onSave, onCancel }: { initial: LessonInput & { position?: number | null }; onSave: (data: LessonInput) => Promise<void>; onCancel: () => void }) {
-  const [form, setForm] = useState<LessonInput>({ title: initial.title, content: initial.content, videoUrl: initial.videoUrl, durationMinutes: initial.durationMinutes, preview: initial.preview, position: initial.position });
+  const [form, setForm] = useState<LessonInput>({ title: initial.title, content: initial.content, videoUrl: initial.videoUrl, videoKey: initial.videoKey, durationMinutes: initial.durationMinutes, preview: initial.preview, position: initial.position });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -83,7 +88,13 @@ function LessonEditor({ initial, onSave, onCancel }: { initial: LessonInput & { 
         <div><label className="label">Davomiyligi (daq)</label><input type="number" min={0} className="input" value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })} /></div>
         <div><label className="label">Tartib</label><input type="number" min={0} className="input" value={form.position ?? ""} placeholder="auto" onChange={(e) => setForm({ ...form, position: e.target.value === "" ? null : Number(e.target.value) })} /></div>
       </div>
-      <div><label className="label">Video havolasi (YouTube, Vimeo yoki .mp4)</label><input type="url" className="input" placeholder="https://www.youtube.com/watch?v=..." value={form.videoUrl ?? ""} onChange={(e) => setForm({ ...form, videoUrl: e.target.value })} /></div>
+      <MediaUpload kind="VIDEO" label="Video (platformada saqlanadi, talabalar faqat shu yerda ko'radi)" value={form.videoKey} onChange={(key) => setForm({ ...form, videoKey: key })} />
+      {!form.videoKey && (
+        <div>
+          <label className="label">Yoki tashqi havola (Vimeo / mp4), ixtiyoriy</label>
+          <input type="url" className="input" placeholder="https://..." value={form.videoUrl ?? ""} onChange={(e) => setForm({ ...form, videoUrl: e.target.value })} />
+        </div>
+      )}
       <div><label className="label">Dars matni / konspekt</label><textarea rows={5} className="input" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="accent-brand-600" checked={form.preview} onChange={(e) => setForm({ ...form, preview: e.target.checked })} />Bepul tanishuv darsi (ro&apos;yxatdan o&apos;tmaganlarga ham ochiq)</label>
       <div className="flex gap-2">

@@ -6,8 +6,12 @@ Stek: Spring Boot 3 (Java 21) + PostgreSQL 16 + Next.js 15 (TypeScript, Tailwind
 
 ## Imkoniyatlar
 
+**Yo'nalishlar** uch guruhda: maktab fanlari (matematika, fizika, kimyo, biologiya, ona tili, tarix, ingliz tili), mahalliy sertifikatlar (Milliy sertifikat, DTM, attestatsiya), xalqaro sertifikatlar (IELTS, SAT, TOPIK).
+
+**Video va audio platformaning o'zida saqlanadi** (YouTube'ga chiqib ketish yo'q): o'qituvchi faylni yuklaydi, talabaga faqat yozilgan bo'lsa qisqa muddatli imzolangan havola beriladi, pleerda yuklab olish tugmasi yo'q, talaba emaili suv belgisi sifatida ko'rinadi. Saqlash ikki rejimli: `local` (VPS diski, Spring orqali Range-streaming) yoki `s3` (Backblaze B2 / Cloudflare R2 / MinIO), kod o'zgarmaydi.
+
 **Talaba**
-- Bosh sahifa: yo'nalishlar, mashhur kurslar, tavsiya etilgan mock imtihonlar, o'qituvchilar maqolalari
+- Bosh sahifa: yo'nalishlar guruhlari, mashhur kurslar, tavsiya etilgan mock imtihonlar, o'qituvchilar maqolalari
 - Kurslar katalogi (qidiruv, yo'nalish, daraja, sahifalash), kurs sahifasi, bepul tanishuv darsi, yozilish
 - O'quv rejimi: video (YouTube / Vimeo / mp4), konspekt, "Darsni tugatdim", testlar, progress
 - Sertifikat: kurs to'liq tugagach avtomatik, noyob kod, PDF chop etish, ochiq tekshirish sahifasi
@@ -37,7 +41,17 @@ cd frontend && npm install && npm run dev
 - Docker'dagi PostgreSQL host'da **5433** portda (lokal PostgreSQL 5432 ni band qilgan bo'lsa).
 - Image'lar `mirror.gcr.io` orqali tortiladi (`auth.docker.io` yopiq tarmoqlar uchun). Qatlam yuklanishi uzilsa buyruqni qayta bering.
 - Frontend'ni Docker'da qurish ham mumkin (`docker compose up --build`), lekin sekin tarmoqda `npm ci` uzilib qolishi mumkin.
-- Demo ma'lumotlar: 5 ta yo'nalish, IELTS Writing kursi (3 dars + test), IELTS Reading va SAT Math mock imtihonlari, 1 ta maqola. Demo admin `.env` dan.
+- Demo ma'lumotlar: 14 ta yo'nalish, IELTS Writing kursi (3 dars + test), IELTS Reading va SAT Math mock imtihonlari, 1 ta maqola. Demo admin `.env` dan.
+
+### Media saqlash
+
+| O'zgaruvchi | Lokal (default) | Object storage |
+|---|---|---|
+| `MEDIA_PROVIDER` | `local` | `s3` |
+| `PUBLIC_API_URL` | `http://localhost:8080` | `https://api.domen.uz` (imzolangan havolalar shu manzildan) |
+| `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_REGION` | — | provayder bergan qiymatlar |
+
+Lokal rejimda fayllar `media` Docker volume'ida (`/data/media`). Limitlar: video 2 GB, audio 200 MB, rasm 10 MB (`APP_MEDIA_MAX_*_MB`). Havola muddati 4 soat (`APP_MEDIA_URL_TTL_MINUTES`). Prod'da Caddy/Nginx'da `client_max_body_size` ni ham 2 GB qiling.
 
 ## Xavfsizlik qarorlari
 
@@ -65,6 +79,8 @@ cd frontend && npm install && npm run dev
 | `GET /api/me`, `PATCH /api/me`, `POST /api/me/password`, `/courses`, `/dashboard`, `/certificates` | login | profil va kabinet |
 | `GET /api/posts`, `/api/posts/{slug}`, `GET /api/teachers/{id}` | hamma | maqolalar, o'qituvchi profili |
 | `/api/admin/courses, lessons, quizzes, exams, posts` | TEACHER (o'ziniki), ADMIN | kontent boshqaruvi |
+| `POST /api/admin/media` (multipart: file, kind=VIDEO/AUDIO/IMAGE) | TEACHER, ADMIN | video/audio/rasm yuklash, saqlash kaliti qaytadi |
+| `GET /api/media/{kind}/{file}?exp&sig` | imzolangan havola | lokal rejimda streaming (Range qo'llab-quvvatlanadi) |
 | `/api/admin/categories (yozish), /api/admin/users` | ADMIN | yo'nalishlar, rollar |
 
 ## Struktura

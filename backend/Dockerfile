@@ -8,7 +8,7 @@ COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 mvn -q -DskipTests package
 
 FROM mirror.gcr.io/library/eclipse-temurin:21-jre-alpine
-RUN addgroup -S app && adduser -S app -G app
+RUN addgroup -S app && adduser -S app -G app && mkdir -p /data/media && chown -R app:app /data
 USER app
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar

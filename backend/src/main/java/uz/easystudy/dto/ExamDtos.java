@@ -24,7 +24,8 @@ public final class ExamDtos {
     public record ExamDetail(Long id, String code, String title, String description, CourseLevel level,
                              boolean featured, CategoryBrief category, List<SectionView> sections) {}
 
-    public record SectionView(Long id, String title, int orderIndex, int durationMinutes, List<QuestionView> questions) {}
+    /** audioUrl: Listening bo'limi uchun vaqtli imzolangan havola (bo'lsa). */
+    public record SectionView(Long id, String title, int orderIndex, int durationMinutes, String audioUrl, List<QuestionView> questions) {}
 
     public record QuestionView(Long id, int orderIndex, QuestionType type, String prompt, String passage,
                                List<Map<String, Object>> options, BigDecimal points) {}
@@ -33,7 +34,7 @@ public final class ExamDtos {
     public record QuestionAdminView(Long id, int orderIndex, QuestionType type, String prompt, String passage,
                                     List<Map<String, Object>> options, List<String> accepted, BigDecimal points) {}
 
-    public record SectionAdminView(Long id, String title, int orderIndex, int durationMinutes, String audioKey,
+    public record SectionAdminView(Long id, String title, int orderIndex, int durationMinutes, String audioKey, String audioUrl,
                                    List<QuestionAdminView> questions) {}
 
     public record BandRow(int minRaw, int maxRaw, BigDecimal scaled) {}

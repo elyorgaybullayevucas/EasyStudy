@@ -105,6 +105,13 @@ export default function AttemptPage() {
             </div>
           )}
           {error && <Alert>{error}</Alert>}
+          {section.audioUrl && (
+            <div className="card p-4" onContextMenu={(e) => e.preventDefault()}>
+              <p className="mb-2 text-sm font-semibold">{section.title}: audio</p>
+              <audio key={section.audioUrl} src={section.audioUrl} controls controlsList="nodownload noplaybackrate" className="w-full" />
+              <p className="mt-1 text-xs text-slate-500">Haqiqiy imtihondagidek audio faqat bir marta eshitiladi deb hisoblang.</p>
+            </div>
+          )}
           {section.questions.map((q) => <QuestionCard key={q.id} q={q} value={answers[q.id]} onChange={(r) => onChange(q.id, r)} />)}
 
           <div className="card flex flex-wrap items-center justify-end gap-3 p-4">

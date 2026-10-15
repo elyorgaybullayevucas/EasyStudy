@@ -26,6 +26,13 @@ public class Category {
     @Column(length = 50)
     private String icon;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grp", nullable = false, length = 30)
+    private CategoryGroup group = CategoryGroup.OTHER;
+
+    @Column(nullable = false)
+    private int position = 100;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

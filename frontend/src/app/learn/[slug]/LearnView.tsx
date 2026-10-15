@@ -127,7 +127,7 @@ export function LearnView({ slug }: { slug: string }) {
             <>
               <div className="bg-black">
                 <div className="mx-auto max-w-5xl">
-                  {lesson ? <VideoPlayer url={lesson.videoUrl} title={lesson.title} />
+                  {lesson ? <VideoPlayer url={lesson.videoUrl} title={lesson.title} source={lesson.videoSource} watermark={user?.email} />
                     : lessonError ? <div className="flex aspect-video items-center justify-center text-slate-400"><LockIcon width={40} height={40} /></div>
                     : <div className="flex aspect-video items-center justify-center"><Spinner /></div>}
                 </div>

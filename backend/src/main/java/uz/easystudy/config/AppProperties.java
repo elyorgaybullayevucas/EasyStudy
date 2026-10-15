@@ -10,7 +10,7 @@ import java.util.List;
 
 @Validated
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(Jwt jwt, Cors cors, Cookie cookie, Demo demo) {
+public record AppProperties(Jwt jwt, Cors cors, Cookie cookie, Demo demo, Media media) {
 
     public record Jwt(
             @NotBlank @Size(min = 32, message = "JWT secret kamida 32 belgidan iborat bo'lishi kerak") String secret,
@@ -22,4 +22,13 @@ public record AppProperties(Jwt jwt, Cors cors, Cookie cookie, Demo demo) {
     public record Cookie(boolean secure) {}
 
     public record Demo(String adminEmail, String adminPassword) {}
+
+    /**
+     * Media saqlash. provider = local (VPS diski, Spring orqali streaming) yoki s3 (MinIO, Backblaze B2, Cloudflare R2 ...).
+     * publicUrl: talabaga beriladigan havolalar uchun bazaviy manzil (local rejimda API manzili).
+     */
+    public record Media(String provider, String dir, String publicUrl, long maxVideoMb, long maxAudioMb, long maxImageMb,
+                        int urlTtlMinutes, S3 s3) {}
+
+    public record S3(String endpoint, String publicEndpoint, String bucket, String accessKey, String secretKey, String region) {}
 }

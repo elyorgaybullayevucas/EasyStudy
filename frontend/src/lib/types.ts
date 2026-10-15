@@ -25,12 +25,16 @@ export interface Page<T> {
   size: number;
 }
 
+export type CategoryGroup = "SCHOOL" | "LOCAL_CERT" | "INTERNATIONAL" | "OTHER";
+
 export interface Category {
   id: number;
   name: string;
   slug: string;
   description: string | null;
   icon: string | null;
+  group: CategoryGroup;
+  position: number;
   courseCount: number;
   examCount: number;
 }
@@ -40,6 +44,7 @@ export interface CategoryBrief {
   name: string;
   slug: string;
   icon: string | null;
+  group: CategoryGroup;
 }
 
 export interface InstructorBrief {
@@ -58,7 +63,10 @@ export interface LessonBrief {
 export interface Lesson extends LessonBrief {
   courseId: number;
   content: string;
+  /** PLATFORM bo'lsa vaqtli imzolangan havola (bir necha soat amal qiladi), EXTERNAL bo'lsa tashqi havola */
   videoUrl: string | null;
+  videoSource: "PLATFORM" | "EXTERNAL" | null;
+  videoKey: string | null;
 }
 
 export interface QuizBrief {
@@ -227,6 +235,7 @@ export interface SectionView {
   title: string;
   orderIndex: number;
   durationMinutes: number;
+  audioUrl: string | null;
   questions: QuestionView[];
 }
 
@@ -285,6 +294,7 @@ export interface SectionAdminView {
   orderIndex: number;
   durationMinutes: number;
   audioKey: string | null;
+  audioUrl: string | null;
   questions: QuestionAdminView[];
 }
 

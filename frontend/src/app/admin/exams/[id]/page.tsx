@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { MediaUpload } from "@/components/admin/MediaUpload";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Alert } from "@/components/ui/Alert";
 import { PageLoader } from "@/components/ui/Spinner";
@@ -150,11 +151,20 @@ function SectionEditor({ section, onChange }: { section: SectionAdminView; onCha
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [audioOpen, setAudioOpen] = useState(false);
+  const saveAudio = async (key: string | null) => {
+    await api.admin.updateSection(section.id, { title: section.title, orderIndex: section.orderIndex, durationMinutes: section.durationMinutes, audioKey: key });
+    onChange();
+  };
   return (
     <div className="card">
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-4">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">{section.orderIndex}</span>
-        <div className="flex-1"><p className="font-semibold">{section.title}</p><p className="text-xs text-slate-500">{section.durationMinutes} daq · {section.questions.length} ta savol</p></div>
+        <div className="flex-1">
+          <p className="font-semibold">{section.title}</p>
+          <p className="text-xs text-slate-500">{section.durationMinutes} daq · {section.questions.length} ta savol {section.audioKey && <span className="text-emerald-700">· audio bor</span>}</p>
+        </div>
+        <button onClick={() => setAudioOpen((v) => !v)} className="btn-ghost">{section.audioKey ? "Audio" : "Audio qo'shish"}</button>
         {confirmDelete ? (
           <>
             <span className="text-sm text-slate-600">Bo&apos;lim va savollari o&apos;chadi.</span>
@@ -163,6 +173,12 @@ function SectionEditor({ section, onChange }: { section: SectionAdminView; onCha
           </>
         ) : <button onClick={() => setConfirmDelete(true)} className="btn-ghost text-red-600">Bo&apos;limni o&apos;chirish</button>}
       </div>
+      {audioOpen && (
+        <div className="border-b border-slate-100 px-5 py-4">
+          <MediaUpload kind="AUDIO" label="Listening audio (MP3) — imtihon vaqtida bo'lim boshida ko'rsatiladi" value={section.audioKey} onChange={saveAudio} />
+          {section.audioUrl && <audio src={section.audioUrl} controls className="mt-3 w-full" />}
+        </div>
+      )}
       <ul className="divide-y divide-slate-100">
         {section.questions.map((q) => (
           <li key={q.id} className="px-5 py-4">

@@ -19,6 +19,7 @@ public class ExamService {
     private final BandConversionRepository bands;
     private final AttemptRepository attempts;
     private final CategoryService categoryService;
+    private final uz.easystudy.media.MediaService media;
 
     // ---------------- talaba ----------------
 
@@ -56,7 +57,7 @@ public class ExamService {
         return new ExamDetail(e.getId(), e.getCode(), e.getTitle(), e.getDescription(), e.getLevel(), e.isFeatured(),
                 CategoryService.brief(e.getCategory()),
                 e.getSections().stream().map(s -> new SectionView(
-                        s.getId(), s.getTitle(), s.getOrderIndex(), s.getDurationMinutes(),
+                        s.getId(), s.getTitle(), s.getOrderIndex(), s.getDurationMinutes(), media.url(s.getAudioKey()),
                         s.getQuestions().stream().map(q -> new QuestionView(
                                 q.getId(), q.getOrderIndex(), q.getType(), q.getPrompt(), q.getPassage(),
                                 q.getOptions(), q.getPoints())).toList())).toList());
@@ -76,7 +77,7 @@ public class ExamService {
     @SuppressWarnings("unchecked")
     private ExamAdminDetail toAdmin(Exam e) {
         List<SectionAdminView> secs = e.getSections().stream().map(s -> new SectionAdminView(
-                s.getId(), s.getTitle(), s.getOrderIndex(), s.getDurationMinutes(), s.getAudioKey(),
+                s.getId(), s.getTitle(), s.getOrderIndex(), s.getDurationMinutes(), s.getAudioKey(), media.url(s.getAudioKey()),
                 s.getQuestions().stream().map(q -> {
                     Object acc = q.getAnswerKey() == null ? null : q.getAnswerKey().get("accepted");
                     List<String> accepted = acc instanceof List<?> l ? l.stream().map(String::valueOf).toList() : List.of();
@@ -148,7 +149,7 @@ public class ExamService {
         s.setTitle(r.title());
         s.setOrderIndex(r.orderIndex());
         s.setDurationMinutes(r.durationMinutes());
-        s.setAudioKey(r.audioKey());
+        s.setAudioKey(r.audioKey() == null || r.audioKey().isBlank() ? null : r.audioKey());
     }
 
     @Transactional

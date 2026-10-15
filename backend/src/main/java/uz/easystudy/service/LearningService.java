@@ -127,7 +127,7 @@ public class LearningService {
         boolean access = l.isPreview() || (me != null &&
                 (enrollments.existsByUserIdAndCourseId(me.id(), c.getId()) || courseService.canManage(me, c)));
         if (!access) throw AppException.forbidden("Darsni ko'rish uchun kursga yoziling");
-        return CourseService.lessonOut(l);
+        return courseService.lessonOut(l);
     }
 
     private Course requireEnrollment(Long userId, Long courseId) {

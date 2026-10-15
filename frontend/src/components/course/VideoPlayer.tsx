@@ -1,3 +1,5 @@
+"use client";
+
 import { PlayIcon } from "@/components/ui/Icons";
 
 function toEmbed(url: string): { kind: "iframe" | "video"; src: string } {
@@ -19,13 +21,30 @@ function toEmbed(url: string): { kind: "iframe" | "video"; src: string } {
   return { kind: "video", src: url };
 }
 
-/** YouTube, Vimeo va to'g'ridan-to'g'ri video fayllarni (.mp4) qo'llab-quvvatlaydi. */
-export function VideoPlayer({ url, title }: { url: string | null; title: string }) {
+/**
+ * Platformada saqlangan video: imzolangan vaqtli havola, yuklab olish tugmasi yo'q, o'ng tugma o'chirilgan,
+ * talaba nomi suv belgisi sifatida (ekran yozib olinsa kimniki ekani ko'rinadi).
+ * Tashqi havola: YouTube/Vimeo embed yoki oddiy mp4.
+ */
+export function VideoPlayer({ url, title, source, watermark }: { url: string | null; title: string; source?: "PLATFORM" | "EXTERNAL" | null; watermark?: string }) {
   if (!url) {
     return (
       <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-slate-800 text-slate-400">
         <PlayIcon width={40} height={40} />
         <p className="text-sm">Bu dars uchun video mavjud emas</p>
+      </div>
+    );
+  }
+  if (source === "PLATFORM") {
+    return (
+      <div className="relative select-none" onContextMenu={(e) => e.preventDefault()}>
+        <video key={url} src={url} controls controlsList="nodownload noplaybackrate" disablePictureInPicture playsInline
+          className="aspect-video w-full bg-black">
+          Brauzeringiz videoni qo&apos;llab-quvvatlamaydi.
+        </video>
+        {watermark && (
+          <span className="pointer-events-none absolute top-3 right-4 rounded bg-black/30 px-2 py-0.5 text-[11px] text-white/60">{watermark}</span>
+        )}
       </div>
     );
   }

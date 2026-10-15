@@ -12,16 +12,17 @@ public final class CourseDtos {
     private CourseDtos() {}
 
     public record CategoryDto(Long id, String name, String slug, String description, String icon,
-                              long courseCount, long examCount) {}
+                              uz.easystudy.domain.CategoryGroup group, int position, long courseCount, long examCount) {}
 
-    public record CategoryBrief(Long id, String name, String slug, String icon) {}
+    public record CategoryBrief(Long id, String name, String slug, String icon, uz.easystudy.domain.CategoryGroup group) {}
 
     public record InstructorBrief(Long id, String fullName) {}
 
     public record LessonBrief(Long id, String title, int durationMinutes, int position, boolean preview) {}
 
-    public record LessonOut(Long id, Long courseId, String title, String content, String videoUrl,
-                            int durationMinutes, int position, boolean preview) {}
+    /** videoUrl: platformadagi video uchun vaqtli imzolangan havola, aks holda tashqi havola. */
+    public record LessonOut(Long id, Long courseId, String title, String content, String videoUrl, String videoSource,
+                            String videoKey, int durationMinutes, int position, boolean preview) {}
 
     public record QuizBrief(Long id, String title, Long lessonId, int passScore, long questionCount) {}
 
@@ -62,6 +63,7 @@ public final class CourseDtos {
             @NotBlank @Size(min = 2, max = 200) String title,
             String content,
             @Size(max = 500) String videoUrl,
+            @Size(max = 255) String videoKey,
             @Min(0) int durationMinutes,
             Integer position,
             boolean preview) {}
@@ -69,5 +71,7 @@ public final class CourseDtos {
     public record CategoryInput(
             @NotBlank @Size(min = 2, max = 100) String name,
             String description,
-            @Size(max = 50) String icon) {}
+            @Size(max = 50) String icon,
+            uz.easystudy.domain.CategoryGroup group,
+            Integer position) {}
 }

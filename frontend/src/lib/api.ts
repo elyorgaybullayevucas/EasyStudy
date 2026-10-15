@@ -162,7 +162,7 @@ export const api = {
     updateQuiz: (id: number, data: QuizInput) => request<QuizAdmin>(`/api/admin/quizzes/${id}`, { method: "PUT", body: data }),
     deleteQuiz: (id: number) => request<void>(`/api/admin/quizzes/${id}`, { method: "DELETE" }),
     categories: () => request<Category[]>("/api/admin/categories"),
-    createCategory: (data: { name: string; description?: string; icon?: string }) => request<Category>("/api/admin/categories", { method: "POST", body: data }),
+    createCategory: (data: { name: string; description?: string; icon?: string; group: string; position?: number }) => request<Category>("/api/admin/categories", { method: "POST", body: data }),
     deleteCategory: (id: number) => request<void>(`/api/admin/categories/${id}`, { method: "DELETE" }),
     users: (params: { search?: string; page?: number } = {}) => request<Page<User>>(`/api/admin/users${qs({ ...params, size: 50 })}`),
     setRole: (id: number, role: UserRole) => request<User>(`/api/admin/users/${id}/role`, { method: "PATCH", body: { role } }),
@@ -204,9 +204,44 @@ export interface LessonInput {
   title: string;
   content: string;
   videoUrl: string | null;
+  videoKey: string | null;
   durationMinutes: number;
   position?: number | null;
   preview: boolean;
+}
+
+export type MediaKind = "VIDEO" | "AUDIO" | "IMAGE";
+export interface MediaUploadResult { key: string; size: number; contentType: string; previewUrl: string }
+
+/** Fayl yuklash (progress bilan). Access token eskirgan bo'lsa avval yangilanadi. */
+export async function uploadMedia(file: File, kind: MediaKind, onProgress?: (pct: number) => void): Promise<MediaUploadResult> {
+  if (!tokenStore.get()) await tryRefresh();
+  const attempt = () =>
+    new Promise<MediaUploadResult>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${API_URL}/api/admin/media`);
+      xhr.withCredentials = true;
+      const t = tokenStore.get();
+      if (t) xhr.setRequestHeader("Authorization", `Bearer ${t}`);
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)); };
+      xhr.onload = () => {
+        let data: unknown = null;
+        try { data = JSON.parse(xhr.responseText); } catch { /* bo'sh */ }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data as MediaUploadResult);
+        else reject(new ApiError(xhr.status, (data as { detail?: string } | null)?.detail ?? (xhr.status === 413 ? "Fayl juda katta" : "Yuklashda xatolik")));
+      };
+      xhr.onerror = () => reject(new ApiError(0, "Serverga ulanib bo'lmadi"));
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("kind", kind);
+      xhr.send(fd);
+    });
+  try {
+    return await attempt();
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401 && (await tryRefresh())) return attempt();
+    throw e;
+  }
 }
 
 export interface QuizInput {

@@ -61,7 +61,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/exams/**", "/api/courses/**", "/api/categories/**",
-                        "/api/certificates/**", "/api/posts/**", "/api/teachers/**").permitAll()
+                        "/api/certificates/**", "/api/posts/**", "/api/teachers/**", "/api/media/**").permitAll()
                 // Rol tekshiruvi kontrollerlardagi @PreAuthorize orqali: token yo'q -> 401, rol yetmasa -> 403
                 .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated())

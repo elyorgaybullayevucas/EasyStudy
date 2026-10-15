@@ -6,6 +6,7 @@ import { PostCard } from "@/components/post/PostCard";
 import { ArrowRightIcon, AwardIcon, BarChartIcon, CategoryIcon, PlayIcon, TimerIcon } from "@/components/ui/Icons";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { serverFetch } from "@/lib/api";
+import { groupLabels, groupOrder } from "@/lib/format";
 import type { Category, CourseListItem, ExamSummary, Page, PostListItem } from "@/lib/types";
 
 const emptyPage = { items: [], total: 0, page: 1, size: 8 };
@@ -40,13 +41,13 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(96,139,250,0.35),transparent_45%)]" />
         <div className="container-page relative grid items-center gap-12 py-20 lg:grid-cols-2 lg:py-28">
           <div>
-            <span className="badge bg-white/10 px-3 py-1 text-brand-100 ring-1 ring-white/20">Xalqaro sertifikatlarga tayyorlov platformasi</span>
+            <span className="badge bg-white/10 px-3 py-1 text-brand-100 ring-1 ring-white/20">O&apos;zbek tilidagi onlayn ta&apos;lim platformasi</span>
             <h1 className="mt-6 text-4xl leading-tight font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              IELTS, SAT, TOPIK: <span className="text-accent-400">o&apos;rganing</span> va <span className="text-accent-400">sinab ko&apos;ring</span>
+              Onlayn maktab: <span className="text-accent-400">o&apos;rganing</span>, <span className="text-accent-400">sinab ko&apos;ring</span>, sertifikat oling
             </h1>
             <p className="mt-6 max-w-xl text-lg text-brand-100">
-              Mutaxassis o&apos;qituvchilarning video kurslari, real formatdagi mock imtihonlar va natijangizni ko&apos;rsatadigan
-              sertifikatlar, barchasi bir platformada.
+              Maktab fanlari, Milliy sertifikat, DTM, IELTS va SAT: mutaxassis o&apos;qituvchilarning video kurslari,
+              real formatdagi mock imtihonlar va tekshiriladigan sertifikatlar, barchasi bir platformada.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/courses" className="btn btn-lg bg-white text-brand-800 hover:bg-brand-50">
@@ -93,20 +94,32 @@ export default async function HomePage() {
       </section>
 
       <section id="kategoriyalar" className="container-page scroll-mt-20 pt-20">
-        <SectionHeading title="Yo'nalishlar" subtitle="O'zingizga kerakli sertifikat yoki sohani tanlang" />
-        {categories.length === 0 ? <p className="text-sm text-slate-500">Kategoriyalar hozircha mavjud emas.</p> : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((c) => (
-              <Link key={c.id} href={`/courses?category=${c.slug}`} className="card group flex items-center gap-4 p-5 transition hover:border-brand-300 hover:shadow-md">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
-                  <CategoryIcon icon={c.icon} width={24} height={24} />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="font-semibold">{c.name}</h3>
-                  <p className="truncate text-sm text-slate-500">{c.courseCount} ta kurs · {c.examCount} ta mock</p>
+        <SectionHeading title="Yo'nalishlar" subtitle="Maktab fanlari, mahalliy va xalqaro sertifikatlar: o'zingizga keraklisini tanlang" />
+        {categories.length === 0 ? <p className="text-sm text-slate-500">Yo&apos;nalishlar hozircha mavjud emas.</p> : (
+          <div className="space-y-10">
+            {groupOrder.map((g) => {
+              const items = categories.filter((c) => c.group === g);
+              if (items.length === 0) return null;
+              return (
+                <div key={g}>
+                  <h3 className="text-lg font-bold">{groupLabels[g].title}</h3>
+                  <p className="mb-4 text-sm text-slate-500">{groupLabels[g].subtitle}</p>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {items.map((c) => (
+                      <Link key={c.id} href={`/courses?category=${c.slug}`} className="card group flex items-center gap-4 p-5 transition hover:border-brand-300 hover:shadow-md">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
+                          <CategoryIcon icon={c.icon} width={24} height={24} />
+                        </span>
+                        <div className="min-w-0">
+                          <h4 className="font-semibold">{c.name}</h4>
+                          <p className="truncate text-sm text-slate-500">{c.courseCount} ta kurs · {c.examCount} ta mock</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

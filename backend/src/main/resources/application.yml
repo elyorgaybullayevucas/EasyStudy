@@ -15,7 +15,9 @@ spring:
     enabled: true
   servlet:
     multipart:
-      max-file-size: 20MB
+      max-file-size: 2GB
+      max-request-size: 2GB
+      file-size-threshold: 2MB
 
 server:
   port: 8080
@@ -35,6 +37,21 @@ app:
   demo:
     admin-email: ${APP_DEMO_ADMIN_EMAIL:admin@easystudy.uz}
     admin-password: ${APP_DEMO_ADMIN_PASSWORD:}
+  media:
+    provider: ${APP_MEDIA_PROVIDER:local}        # local | s3
+    dir: ${APP_MEDIA_DIR:./data/media}
+    public-url: ${APP_PUBLIC_URL:http://localhost:8080}
+    max-video-mb: ${APP_MEDIA_MAX_VIDEO_MB:2000}
+    max-audio-mb: ${APP_MEDIA_MAX_AUDIO_MB:200}
+    max-image-mb: ${APP_MEDIA_MAX_IMAGE_MB:10}
+    url-ttl-minutes: ${APP_MEDIA_URL_TTL_MINUTES:240}
+    s3:
+      endpoint: ${APP_S3_ENDPOINT:}
+      public-endpoint: ${APP_S3_PUBLIC_ENDPOINT:}
+      bucket: ${APP_S3_BUCKET:easystudy-media}
+      access-key: ${APP_S3_ACCESS_KEY:}
+      secret-key: ${APP_S3_SECRET_KEY:}
+      region: ${APP_S3_REGION:us-east-1}
 
 management:
   endpoints:

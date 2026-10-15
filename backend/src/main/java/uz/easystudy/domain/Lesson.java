@@ -22,8 +22,13 @@ public class Lesson {
     @Column(nullable = false, columnDefinition = "text")
     private String content = "";
 
+    /** Tashqi havola (Vimeo va h.k.) — ixtiyoriy; platformada saqlangan video bo'lsa videoKey ustun. */
     @Column(name = "video_url", length = 500)
     private String videoUrl;
+
+    /** Platforma saqlash kaliti (lokal disk yoki S3). Talabaga faqat vaqtli imzolangan havola beriladi. */
+    @Column(name = "video_key", length = 255)
+    private String videoKey;
 
     @Column(name = "duration_minutes", nullable = false)
     private int durationMinutes = 0;

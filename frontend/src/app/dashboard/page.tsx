@@ -68,7 +68,7 @@ export default function DashboardPage() {
 
 const tones = { brand: "bg-brand-50 text-brand-600", emerald: "bg-emerald-50 text-emerald-600", amber: "bg-amber-50 text-amber-600", violet: "bg-violet-50 text-violet-600" };
 
-export function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number | string; tone: keyof typeof tones }) {
+function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number | string; tone: keyof typeof tones }) {
   return (
     <div className="card flex items-center gap-4 p-5">
       <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", tones[tone])}>{icon}</span>

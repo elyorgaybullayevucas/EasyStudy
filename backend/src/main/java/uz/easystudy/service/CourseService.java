@@ -27,6 +27,7 @@ public class CourseService {
     private final EnrollmentRepository enrollments;
     private final UserRepository users;
     private final CategoryService categoryService;
+    private final uz.easystudy.media.MediaService media;
 
     // ---------------- umumiy ----------------
 
@@ -70,8 +71,21 @@ public class CourseService {
         return new LessonBrief(l.getId(), l.getTitle(), l.getDurationMinutes(), l.getPosition(), l.isPreview());
     }
 
-    public static LessonOut lessonOut(Lesson l) {
-        return new LessonOut(l.getId(), l.getCourse().getId(), l.getTitle(), l.getContent(), l.getVideoUrl(),
+    /** Platformadagi video bo'lsa vaqtli imzolangan havola; aks holda tashqi havola. */
+    public LessonOut lessonOut(Lesson l) {
+        String url;
+        String source;
+        if (l.getVideoKey() != null && !l.getVideoKey().isBlank()) {
+            url = media.url(l.getVideoKey());
+            source = "PLATFORM";
+        } else if (l.getVideoUrl() != null && !l.getVideoUrl().isBlank()) {
+            url = l.getVideoUrl();
+            source = "EXTERNAL";
+        } else {
+            url = null;
+            source = null;
+        }
+        return new LessonOut(l.getId(), l.getCourse().getId(), l.getTitle(), l.getContent(), url, source, l.getVideoKey(),
                 l.getDurationMinutes(), l.getPosition(), l.isPreview());
     }
 
@@ -143,7 +157,7 @@ public class CourseService {
                 c.getThumbnailUrl(), c.getLevel(), c.getPrice(), c.isFeatured(), c.isPublished(),
                 CategoryService.brief(c.getCategory()), instructor(c.getInstructor()), s[0], s[1], s[2],
                 c.getCreatedAt(), c.getUpdatedAt(),
-                c.getLessons().stream().map(CourseService::lessonOut).toList(), quizBriefs(c));
+                c.getLessons().stream().map(this::lessonOut).toList(), quizBriefs(c));
     }
 
     @Transactional(readOnly = true)
@@ -221,6 +235,7 @@ public class CourseService {
         Course c = getManaged(l.getCourse().getId(), me);
         c.getLessons().remove(l);
         lessons.delete(l);
+        media.delete(l.getVideoKey());
         c.setUpdatedAt(Instant.now());
     }
 
@@ -228,6 +243,9 @@ public class CourseService {
         l.setTitle(in.title().trim());
         l.setContent(in.content() == null ? "" : in.content());
         l.setVideoUrl(blankToNull(in.videoUrl()));
+        String newKey = blankToNull(in.videoKey());
+        if (l.getVideoKey() != null && !l.getVideoKey().equals(newKey)) media.delete(l.getVideoKey()); // eski video o'chadi
+        l.setVideoKey(newKey);
         l.setDurationMinutes(in.durationMinutes());
         if (in.position() != null) l.setPosition(in.position());
         l.setPreview(in.preview());

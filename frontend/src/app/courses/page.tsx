@@ -5,7 +5,7 @@ import { CourseCard } from "@/components/course/CourseCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchIcon } from "@/components/ui/Icons";
 import { serverFetch } from "@/lib/api";
-import { cn, levelLabels } from "@/lib/format";
+import { cn, groupLabels, groupOrder, levelLabels } from "@/lib/format";
 import type { Category, CourseLevel, CourseListItem, Page } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Kurslar" };
@@ -58,12 +58,19 @@ export default async function CoursesPage({ searchParams }: { searchParams: Prom
         <aside className="space-y-6">
           <FilterGroup title="Yo'nalish">
             <FilterLink href={href({ category: "", page: "" })} active={!category}>Barchasi</FilterLink>
-            {categories.map((c) => (
-              <FilterLink key={c.id} href={href({ category: c.slug, page: "" })} active={category === c.slug}>
-                {c.name} <span className="text-slate-400">({c.courseCount})</span>
-              </FilterLink>
-            ))}
           </FilterGroup>
+          {groupOrder.map((g) => {
+            const items = categories.filter((c) => c.group === g);
+            return items.length === 0 ? null : (
+              <FilterGroup key={g} title={groupLabels[g].title}>
+                {items.map((c) => (
+                  <FilterLink key={c.id} href={href({ category: c.slug, page: "" })} active={category === c.slug}>
+                    {c.name} <span className="text-slate-400">({c.courseCount})</span>
+                  </FilterLink>
+                ))}
+              </FilterGroup>
+            );
+          })}
           <FilterGroup title="Daraja">
             <FilterLink href={href({ level: "", page: "" })} active={!level}>Barchasi</FilterLink>
             {(Object.keys(levelLabels) as CourseLevel[]).map((l) => (

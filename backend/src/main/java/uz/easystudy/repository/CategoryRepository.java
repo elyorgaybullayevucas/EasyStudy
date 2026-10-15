@@ -11,7 +11,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findBySlug(String slug);
     boolean existsByNameIgnoreCase(String name);
     boolean existsBySlug(String slug);
-    List<Category> findAllByOrderByNameAsc();
+    List<Category> findAllByOrderByPositionAscNameAsc();
 
     /** [categoryId, publishedCourseCount] */
     @Query("select c.category.id, count(c) from Course c where c.category is not null and (:publishedOnly = false or c.published = true) group by c.category.id")

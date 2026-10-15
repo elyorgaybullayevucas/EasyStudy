@@ -1,10 +1,18 @@
-import type { AttemptStatus, CourseLevel, QuestionType, UserRole } from "./types";
+import type { AttemptStatus, CategoryGroup, CourseLevel, QuestionType, UserRole } from "./types";
 
 export const levelLabels: Record<CourseLevel, string> = {
   BEGINNER: "Boshlang'ich",
   INTERMEDIATE: "O'rta",
   ADVANCED: "Yuqori",
 };
+
+export const groupLabels: Record<CategoryGroup, { title: string; subtitle: string }> = {
+  SCHOOL: { title: "Maktab fanlari", subtitle: "Eng muhim fanlar bo'yicha to'liq kurslar va testlar" },
+  LOCAL_CERT: { title: "Mahalliy sertifikatlar", subtitle: "Milliy sertifikat, DTM va attestatsiyaga tayyorlov" },
+  INTERNATIONAL: { title: "Xalqaro sertifikatlar", subtitle: "IELTS, SAT, TOPIK va boshqalar" },
+  OTHER: { title: "Boshqa yo'nalishlar", subtitle: "Dasturlash, kasbiy ko'nikmalar" },
+};
+export const groupOrder: CategoryGroup[] = ["SCHOOL", "LOCAL_CERT", "INTERNATIONAL", "OTHER"];
 
 export const roleLabels: Record<UserRole, string> = {
   STUDENT: "Talaba",
