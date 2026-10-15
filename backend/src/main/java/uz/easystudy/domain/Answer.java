@@ -39,4 +39,11 @@ public class Answer {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
+
+    /** O'qituvchi izohi (Writing/Speaking). */
+    @Column(columnDefinition = "text")
+    private String feedback;
+
+    @Column(name = "graded_by")
+    private Long gradedBy;
 }

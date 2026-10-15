@@ -2,6 +2,9 @@ package uz.easystudy.dto;
 
 import jakarta.validation.constraints.NotNull;
 import uz.easystudy.domain.AttemptStatus;
+import uz.easystudy.domain.PartType;
+import uz.easystudy.domain.QuestionType;
+import uz.easystudy.domain.ScoringMode;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -15,14 +18,37 @@ public final class AttemptDtos {
 
     public record SaveAnswerRequest(@NotNull Long questionId, @NotNull Map<String, Object> response) {}
 
-    public record AttemptView(Long id, Long examId, String examTitle, AttemptStatus status,
+    /** Bo'limning urinishdagi holati: boshlanmagan / ochiq / yakunlangan. */
+    public record SectionState(Long sectionId, String title, PartType partType, int orderIndex, int durationMinutes,
+                               int questionCount, Instant startedAt, Instant endsAt, Instant finishedAt, String status) {}
+
+    public record AttemptView(Long id, Long examId, String examTitle, ScoringMode scoringMode, AttemptStatus status,
                               Instant startedAt, Instant expiresAt, Instant submittedAt,
                               BigDecimal rawScore, BigDecimal scaledScore,
+                              List<SectionState> sections, Long currentSectionId,
                               Map<Long, Map<String, Object>> answers) {}
 
-    public record AnswerResult(Long questionId, Map<String, Object> response, Boolean correct, BigDecimal points) {}
+    public record AnswerResult(Long questionId, Long sectionId, QuestionType type, Map<String, Object> response,
+                               Boolean correct, BigDecimal points, BigDecimal maxPoints, String feedback,
+                               String audioUrl, boolean pending) {}
 
-    public record AttemptResult(Long id, Long examId, String examTitle, AttemptStatus status,
-                                BigDecimal rawScore, BigDecimal maxScore, BigDecimal scaledScore,
-                                List<AnswerResult> answers) {}
+    public record SectionResult(Long sectionId, String title, PartType partType, BigDecimal rawScore, BigDecimal maxScore,
+                                BigDecimal scaledScore, boolean pending) {}
+
+    public record AttemptResult(Long id, Long examId, String examTitle, ScoringMode scoringMode, AttemptStatus status,
+                                BigDecimal rawScore, BigDecimal maxScore, BigDecimal scaledScore, String label,
+                                int pendingCount, List<SectionResult> sections, List<AnswerResult> answers) {}
+
+    // ---------- o'qituvchi tekshiruvi ----------
+    public record GradingRow(Long attemptId, Long examId, String examTitle, String studentName, String studentEmail,
+                             Instant submittedAt, AttemptStatus status, int pendingCount) {}
+
+    public record GradingAttempt(GradingRow summary, List<GradingQuestion> questions) {}
+
+    public record GradingQuestion(Long questionId, Long sectionId, String sectionTitle, QuestionType type, String prompt,
+                                  BigDecimal maxPoints, Map<String, Object> response, String audioUrl,
+                                  BigDecimal points, String feedback) {}
+
+    public record GradeItem(@NotNull Long questionId, @NotNull BigDecimal points, String feedback) {}
+    public record GradeRequest(@NotNull List<GradeItem> items) {}
 }

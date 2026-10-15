@@ -38,7 +38,8 @@ export default function AdminExamsPage() {
                 <tr key={e.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <Link href={`/admin/exams/${e.id}`} className="font-medium text-brand-700 hover:underline">{e.title}</Link>
-                    <p className="font-mono text-xs text-slate-500">{e.code} · {e.category?.name ?? "Kategoriyasiz"}</p>
+                    <p className="font-mono text-xs text-slate-500">{e.code} · {e.category?.name ?? "Kategoriyasiz"} · {e.templateCode ?? "CUSTOM"}</p>
+                    <p className="text-xs text-slate-500">{(e.parts ?? []).join(" · ")}</p>
                   </td>
                   <td className="px-4 py-3">{levelLabels[e.level]}</td>
                   <td className="px-4 py-3">{e.totalMinutes} daq</td>

@@ -21,6 +21,7 @@ export function ExamCard({ exam }: { exam: ExamSummary }) {
         </div>
         <h3 className="mt-3 line-clamp-2 font-semibold group-hover:text-brand-700">{exam.title}</h3>
         <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{exam.description}</p>
+        {exam.parts?.length > 0 && <p className="mt-2 truncate text-xs text-slate-500">{exam.parts.join(" · ")}</p>}
         <div className="mt-auto flex items-center gap-4 border-t border-slate-100 pt-4 text-xs text-slate-500">
           <span className="flex items-center gap-1"><TimerIcon width={14} height={14} />{exam.totalMinutes} daq</span>
           <span className="flex items-center gap-1"><FileTextIcon width={14} height={14} />{exam.questionCount} savol</span>

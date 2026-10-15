@@ -39,6 +39,21 @@ public class Exam {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    /** Imtihonni yaratgan o'qituvchi; TEACHER faqat o'z imtihonlarini boshqaradi. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scoring_mode", nullable = false, length = 20)
+    private ScoringMode scoringMode = ScoringMode.TOTAL;
+
+    @Column(name = "template_code", length = 40)
+    private String templateCode;
+
+    @Column(columnDefinition = "text")
+    private String instructions;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 

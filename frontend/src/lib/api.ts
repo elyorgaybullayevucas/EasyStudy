@@ -1,8 +1,8 @@
 import type {
   AdminStats, AnswerResponse, AttemptResult, AttemptView, BandRow, Category, Certificate, CourseAdminDetail,
-  CourseDetail, CourseListItem, CourseProgress, DashboardStats, ExamAdminDetail, ExamDetail, ExamSummary, Lesson,
-  MyCourse, Page, PostDetail, PostListItem, QuestionType, QuizAdmin, QuizPublic, QuizResult, TeacherProfile,
-  TokenResponse, User, UserRole,
+  CourseDetail, CourseListItem, CourseProgress, DashboardStats, ExamAdminDetail, ExamDetail, ExamSummary,
+  GradingAttempt, GradingRow, Lesson, MyCourse, Page, PartType, PostDetail, PostListItem, QuestionType, QuizAdmin,
+  QuizPublic, QuizResult, ScoringMode, TeacherProfile, TemplateInfo, TokenResponse, User, UserRole,
 } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -137,8 +137,12 @@ export const api = {
     start: (examId: number) => request<AttemptView>("/api/attempts", { method: "POST", body: { examId } }),
     get: (id: number | string) => request<AttemptView>(`/api/attempts/${id}`),
     mine: () => request<AttemptView[]>("/api/attempts"),
+    startSection: (id: number | string, sectionId: number) => request<AttemptView>(`/api/attempts/${id}/sections/${sectionId}/start`, { method: "POST" }),
+    finishSection: (id: number | string, sectionId: number) => request<AttemptView>(`/api/attempts/${id}/sections/${sectionId}/finish`, { method: "POST" }),
     answer: (id: number | string, questionId: number, response: AnswerResponse) =>
       request<void>(`/api/attempts/${id}/answers`, { method: "PUT", body: { questionId, response } }),
+    audioAnswer: (id: number | string, questionId: number, blob: Blob, onProgress?: (p: number) => void) =>
+      uploadForm(`/api/attempts/${id}/answers/audio`, (fd) => { fd.append("questionId", String(questionId)); fd.append("file", blob, "answer.webm"); }, onProgress) as Promise<{ audioKey: string; audioUrl: string }>,
     submit: (id: number | string) => request<AttemptResult>(`/api/attempts/${id}/submit`, { method: "POST" }),
     result: (id: number | string) => request<AttemptResult>(`/api/attempts/${id}/result`),
   },
@@ -168,14 +172,22 @@ export const api = {
     setRole: (id: number, role: UserRole) => request<User>(`/api/admin/users/${id}/role`, { method: "PATCH", body: { role } }),
     // mock imtihonlar
     exams: () => request<ExamSummary[]>("/api/admin/exams"),
+    examTemplates: () => request<TemplateInfo[]>("/api/admin/exams/templates"),
     exam: (id: number) => request<ExamAdminDetail>(`/api/admin/exams/${id}`),
     createExam: (data: ExamInput) => request<ExamAdminDetail>("/api/admin/exams", { method: "POST", body: data }),
+    createExamFromTemplate: (code: string, data: ExamInput) => request<ExamAdminDetail>(`/api/admin/exams/from-template/${code}`, { method: "POST", body: data }),
     updateExam: (id: number, data: ExamInput) => request<ExamAdminDetail>(`/api/admin/exams/${id}`, { method: "PUT", body: data }),
     deleteExam: (id: number) => request<void>(`/api/admin/exams/${id}`, { method: "DELETE" }),
     setBands: (id: number, bands: BandRow[]) => request<ExamAdminDetail>(`/api/admin/exams/${id}/bands`, { method: "PUT", body: { bands } }),
+    setSectionBands: (sectionId: number, bands: BandRow[]) => request<void>(`/api/admin/exams/sections/${sectionId}/bands`, { method: "PUT", body: { bands } }),
     addSection: (examId: number, data: SectionInput) => request<{ id: number }>(`/api/admin/exams/${examId}/sections`, { method: "POST", body: data }),
     updateSection: (id: number, data: SectionInput) => request<void>(`/api/admin/exams/sections/${id}`, { method: "PUT", body: data }),
     deleteSection: (id: number) => request<void>(`/api/admin/exams/sections/${id}`, { method: "DELETE" }),
+    // tekshirish navbati
+    grading: (all = false) => request<GradingRow[]>(`/api/admin/grading${qs({ all })}`),
+    gradingAttempt: (attemptId: number) => request<GradingAttempt>(`/api/admin/grading/${attemptId}`),
+    grade: (attemptId: number, items: { questionId: number; points: number; feedback?: string }[]) =>
+      request<GradingAttempt>(`/api/admin/grading/${attemptId}`, { method: "POST", body: { items } }),
     addQuestion: (sectionId: number, data: ExamQuestionInput) => request<{ id: number }>(`/api/admin/exams/sections/${sectionId}/questions`, { method: "POST", body: data }),
     updateQuestion: (id: number, data: ExamQuestionInput) => request<void>(`/api/admin/exams/questions/${id}`, { method: "PUT", body: data }),
     deleteQuestion: (id: number) => request<void>(`/api/admin/exams/questions/${id}`, { method: "DELETE" }),
@@ -260,12 +272,17 @@ export interface ExamInput {
   featured: boolean;
   published: boolean;
   categoryId: number | null;
+  scoringMode?: ScoringMode | null;
+  instructions?: string | null;
 }
 
 export interface SectionInput {
   title: string;
+  partType: PartType;
   orderIndex: number;
   durationMinutes: number;
+  instructions?: string | null;
+  defaultPoints?: number | null;
   audioKey?: string | null;
 }
 
@@ -277,6 +294,41 @@ export interface ExamQuestionInput {
   options: { key: string; text: string }[] | null;
   accepted: string[];
   points: number;
+  weight?: number | null;
+  imageKey?: string | null;
+  minWords?: number | null;
+  prepSeconds?: number | null;
+  answerSeconds?: number | null;
+}
+
+/** Multipart yuklash (progress bilan); 401 bo'lsa token yangilanib qayta uriniladi. */
+export async function uploadForm(path: string, fill: (fd: FormData) => void, onProgress?: (pct: number) => void): Promise<unknown> {
+  if (!tokenStore.get()) await tryRefresh();
+  const attempt = () =>
+    new Promise<unknown>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${API_URL}${path}`);
+      xhr.withCredentials = true;
+      const t = tokenStore.get();
+      if (t) xhr.setRequestHeader("Authorization", `Bearer ${t}`);
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)); };
+      xhr.onload = () => {
+        let data: unknown = null;
+        try { data = JSON.parse(xhr.responseText); } catch { /* bo'sh */ }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+        else reject(new ApiError(xhr.status, (data as { detail?: string } | null)?.detail ?? (xhr.status === 413 ? "Fayl juda katta" : "Yuklashda xatolik")));
+      };
+      xhr.onerror = () => reject(new ApiError(0, "Serverga ulanib bo'lmadi"));
+      const fd = new FormData();
+      fill(fd);
+      xhr.send(fd);
+    });
+  try {
+    return await attempt();
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401 && (await tryRefresh())) return attempt();
+    throw e;
+  }
 }
 
 export interface PostInput {

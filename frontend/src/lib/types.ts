@@ -203,7 +203,9 @@ export interface AdminStats {
 
 // ---------- mock imtihonlar ----------
 
-export type QuestionType = "SINGLE_CHOICE" | "MULTI_CHOICE" | "GAP_FILL" | "TRUE_FALSE_NG" | "MATCHING" | "ESSAY";
+export type QuestionType = "SINGLE_CHOICE" | "MULTI_CHOICE" | "GAP_FILL" | "TRUE_FALSE_NG" | "MATCHING" | "ESSAY" | "SPEAKING";
+export type PartType = "LISTENING" | "READING" | "WRITING" | "SPEAKING" | "MATH" | "GENERAL";
+export type ScoringMode = "TOTAL" | "SECTION_AVERAGE" | "SECTION_SUM";
 export type Option = { key: string; text: string };
 
 export interface ExamSummary {
@@ -215,6 +217,9 @@ export interface ExamSummary {
   featured: boolean;
   published: boolean;
   category: CategoryBrief | null;
+  templateCode: string | null;
+  scoringMode: ScoringMode;
+  parts: string[];
   totalMinutes: number;
   questionCount: number;
   attemptCount: number;
@@ -228,14 +233,21 @@ export interface QuestionView {
   passage: string | null;
   options: Option[] | null;
   points: number;
+  imageUrl: string | null;
+  minWords: number | null;
+  prepSeconds: number | null;
+  answerSeconds: number | null;
 }
 
 export interface SectionView {
   id: number;
   title: string;
+  partType: PartType;
   orderIndex: number;
   durationMinutes: number;
+  instructions: string | null;
   audioUrl: string | null;
+  manual: boolean;
   questions: QuestionView[];
 }
 
@@ -247,61 +259,108 @@ export interface ExamDetail {
   level: CourseLevel;
   featured: boolean;
   category: CategoryBrief | null;
+  templateCode: string | null;
+  scoringMode: ScoringMode;
+  instructions: string | null;
   sections: SectionView[];
 }
 
-export type AnswerResponse = { value?: string; values?: string[]; text?: string };
+export type AnswerResponse = { value?: string; values?: string[]; text?: string; audioKey?: string; audioUrl?: string };
 export type AttemptStatus = "IN_PROGRESS" | "SUBMITTED" | "EXPIRED" | "GRADED";
+export type SectionStatus = "LOCKED" | "OPEN" | "FINISHED";
+
+export interface SectionState {
+  sectionId: number;
+  title: string;
+  partType: PartType;
+  orderIndex: number;
+  durationMinutes: number;
+  questionCount: number;
+  startedAt: string | null;
+  endsAt: string | null;
+  finishedAt: string | null;
+  status: SectionStatus;
+}
 
 export interface AttemptView {
   id: number;
   examId: number;
   examTitle: string;
+  scoringMode: ScoringMode;
   status: AttemptStatus;
   startedAt: string;
   expiresAt: string;
   submittedAt: string | null;
   rawScore: number | null;
   scaledScore: number | null;
+  sections: SectionState[];
+  currentSectionId: number | null;
   answers: Record<string, AnswerResponse>;
 }
 
 export interface AnswerResult {
   questionId: number;
+  sectionId: number;
+  type: QuestionType;
   response: AnswerResponse | null;
   correct: boolean | null;
   points: number | null;
+  maxPoints: number;
+  feedback: string | null;
+  audioUrl: string | null;
+  pending: boolean;
+}
+
+export interface SectionResult {
+  sectionId: number;
+  title: string;
+  partType: PartType;
+  rawScore: number | null;
+  maxScore: number | null;
+  scaledScore: number | null;
+  pending: boolean;
 }
 
 export interface AttemptResult {
   id: number;
   examId: number;
   examTitle: string;
+  scoringMode: ScoringMode;
   status: AttemptStatus;
   rawScore: number | null;
   maxScore: number;
   scaledScore: number | null;
+  label: string | null;
+  pendingCount: number;
+  sections: SectionResult[];
   answers: AnswerResult[];
 }
 
 export interface QuestionAdminView extends QuestionView {
   accepted: string[];
-}
-
-export interface SectionAdminView {
-  id: number;
-  title: string;
-  orderIndex: number;
-  durationMinutes: number;
-  audioKey: string | null;
-  audioUrl: string | null;
-  questions: QuestionAdminView[];
+  weight: number;
+  imageKey: string | null;
 }
 
 export interface BandRow {
   minRaw: number;
   maxRaw: number;
   scaled: number;
+  label?: string | null;
+}
+
+export interface SectionAdminView {
+  id: number;
+  title: string;
+  partType: PartType;
+  orderIndex: number;
+  durationMinutes: number;
+  instructions: string | null;
+  defaultPoints: number;
+  audioKey: string | null;
+  audioUrl: string | null;
+  bands: BandRow[];
+  questions: QuestionAdminView[];
 }
 
 export interface ExamAdminDetail {
@@ -313,8 +372,64 @@ export interface ExamAdminDetail {
   featured: boolean;
   published: boolean;
   category: CategoryBrief | null;
+  ownerId: number | null;
+  ownerName: string | null;
+  templateCode: string | null;
+  scoringMode: ScoringMode;
+  instructions: string | null;
   sections: SectionAdminView[];
   bands: BandRow[];
+}
+
+export interface TemplateSection {
+  title: string;
+  partType: PartType;
+  durationMinutes: number;
+  defaultPoints: number;
+  questionCount: number;
+  questionTypes: string;
+  instructions: string;
+  manual: boolean;
+}
+
+export interface TemplateInfo {
+  code: string;
+  title: string;
+  group: CategoryGroup;
+  description: string;
+  scoringMode: ScoringMode;
+  scoringNote: string;
+  totalMinutes: number;
+  sections: TemplateSection[];
+}
+
+export interface GradingRow {
+  attemptId: number;
+  examId: number;
+  examTitle: string;
+  studentName: string;
+  studentEmail: string;
+  submittedAt: string | null;
+  status: AttemptStatus;
+  pendingCount: number;
+}
+
+export interface GradingQuestion {
+  questionId: number;
+  sectionId: number;
+  sectionTitle: string;
+  type: QuestionType;
+  prompt: string;
+  maxPoints: number;
+  response: AnswerResponse | null;
+  audioUrl: string | null;
+  points: number | null;
+  feedback: string | null;
+}
+
+export interface GradingAttempt {
+  summary: GradingRow;
+  questions: GradingQuestion[];
 }
 
 // ---------- maqolalar / o'qituvchilar ----------

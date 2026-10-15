@@ -45,6 +45,26 @@ public class Question {
     @Column(name = "answer_key", nullable = false, columnDefinition = "jsonb")
     private Map<String, Object> answerKey;
 
+    /** Maksimal ball. ESSAY/SPEAKING uchun band shkalasi (IELTS: 9). */
     @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal points = BigDecimal.ONE;
+
+    /** Qo'lda baholanadigan bo'limda o'rtacha hisoblashdagi vazn (IELTS Writing Task 2 = 2). */
+    @Column(nullable = false, precision = 4, scale = 2)
+    private BigDecimal weight = BigDecimal.ONE;
+
+    /** Rasm (grafik, diagramma, cue card) saqlash kaliti. */
+    @Column(name = "image_key", length = 255)
+    private String imageKey;
+
+    /** Writing: minimal so'z soni. */
+    @Column(name = "min_words")
+    private Integer minWords;
+
+    /** Speaking: tayyorlanish va javob vaqti (soniya). */
+    @Column(name = "prep_seconds")
+    private Integer prepSeconds;
+
+    @Column(name = "answer_seconds")
+    private Integer answerSeconds;
 }

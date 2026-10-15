@@ -15,12 +15,16 @@ Stek: Spring Boot 3 (Java 21) + PostgreSQL 16 + Next.js 15 (TypeScript, Tailwind
 - Kurslar katalogi (qidiruv, yo'nalish, daraja, sahifalash), kurs sahifasi, bepul tanishuv darsi, yozilish
 - O'quv rejimi: video (YouTube / Vimeo / mp4), konspekt, "Darsni tugatdim", testlar, progress
 - Sertifikat: kurs to'liq tugagach avtomatik, noyob kod, PDF chop etish, ochiq tekshirish sahifasi
-- Mock imtihonlar: bo'limlar, 6 xil savol turi, server taymeri, avtosaqlash, avtomatik baholash, xom ball → band/shkala
+- Mock imtihonlar haqiqiy formatda: bo'limlar ketma-ket (har birining o'z taymeri, qaytib bo'lmaydi), Listening audio, Reading matnlari, Writing (so'z hisobi, minimal so'z), Speaking (brauzerda mikrofon orqali yozish, tayyorlanish/javob vaqti), avtosaqlash
+- Baholash: Listening/Reading avtomatik + bo'lim konversiya jadvali; Writing/Speaking o'qituvchi tekshiradi (ball + izoh); umumiy natija usuli: IELTS o'rtacha (.5 yaxlitlash), SAT yig'indi, TOPIK/DTM umumiy ball → daraja yorlig'i
+- Imtihon shablonlari: IELTS Academic/General, Digital SAT, TOPIK I/II, Milliy sertifikat (ingliz tili, fan), DTM (1.1/2.1/3.1 ball), Attestatsiya, bo'sh. Shablon bo'limlar, vaqt, ball, rasmiy konversiya jadvallari va Writing/Speaking vazifalarini tayyor beradi
 - Shaxsiy kabinet: kurslarim, imtihon natijalarim (eng yaxshi natija), sertifikatlarim, profil
 
 **O'qituvchi** (`TEACHER` roli, `/admin`)
 - O'z kurslarini yaratadi: darslar, testlar; faqat o'z kurslarini ko'radi va tahrirlaydi
-- Mock imtihonlar: bo'limlar, savollar (javob kaliti bilan), ball konversiyasi
+- Mock imtihonlar: shablondan yaratish, bo'limlar (tur, yo'riqnoma, audio, standart ball), savollar (rasm, so'z limiti, speaking vaqtlari), bo'lim va umumiy konversiya; nashr qilishdan oldin tekshiruv (bo'sh bo'lim, audiosiz Listening bloklanadi)
+- Tekshirish navbati (`/admin/grading`): Writing/Speaking javoblari, ball va izoh; o'qituvchi faqat o'z imtihonlarini ko'radi
+- Yo'riqnoma (`/admin/guide`): har bir imtihon turi uchun materialni qanday tayyorlash va yuklash
 - Maqolalar: o'z sohasi bo'yicha postlar (qoralama / nashr)
 - Ochiq profil `/teachers/{id}`: sarlavha, bio, rasm, kurslari, maqolalari
 
@@ -75,7 +79,9 @@ Lokal rejimda fayllar `media` Docker volume'ida (`/data/media`). Limitlar: video
 | `GET /api/quizzes/{id}`, `POST .../submit` | yozilgan | kurs testi |
 | `GET /api/certificates/{code}` | hamma | sertifikatni tekshirish |
 | `GET /api/exams`, `/api/exams/{id}` | hamma | mock imtihonlar |
-| `POST /api/attempts`, `PUT .../answers`, `POST .../submit`, `GET .../result` | login | imtihon urinishi |
+| `POST /api/attempts`, `POST .../sections/{id}/start|finish`, `PUT .../answers`, `POST .../answers/audio`, `POST .../submit`, `GET .../result` | login | imtihon urinishi (bo'limma-bo'lim) |
+| `GET /api/admin/exams/templates`, `POST /api/admin/exams/from-template/{code}`, `PUT .../sections/{id}/bands` | TEACHER, ADMIN | shablon, bo'lim konversiyasi |
+| `GET /api/admin/grading`, `GET/POST /api/admin/grading/{attemptId}` | TEACHER (o'ziniki), ADMIN | Writing/Speaking tekshiruvi |
 | `GET /api/me`, `PATCH /api/me`, `POST /api/me/password`, `/courses`, `/dashboard`, `/certificates` | login | profil va kabinet |
 | `GET /api/posts`, `/api/posts/{slug}`, `GET /api/teachers/{id}` | hamma | maqolalar, o'qituvchi profili |
 | `/api/admin/courses, lessons, quizzes, exams, posts` | TEACHER (o'ziniki), ADMIN | kontent boshqaruvi |

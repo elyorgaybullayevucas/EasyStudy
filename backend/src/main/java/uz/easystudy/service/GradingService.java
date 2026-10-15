@@ -22,7 +22,7 @@ public class GradingService {
         Set<String> accepted = normalise(asList(q.getAnswerKey().get("accepted")));
 
         return switch (q.getType()) {
-            case ESSAY -> null;
+            case ESSAY, SPEAKING -> null;
             case SINGLE_CHOICE, TRUE_FALSE_NG, GAP_FILL -> {
                 Object v = response.get("value");
                 yield v != null && accepted.contains(norm(v.toString()));

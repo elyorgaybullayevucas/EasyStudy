@@ -6,13 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import uz.easystudy.domain.BandConversion;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface BandConversionRepository extends JpaRepository<BandConversion, Long> {
-    Optional<BandConversion> findFirstByExamIdAndMinRawLessThanEqualAndMaxRawGreaterThanEqual(Long examId, int raw1, int raw2);
-    List<BandConversion> findByExamIdOrderByMinRawAsc(Long examId);
+    List<BandConversion> findByExamIdOrderBySectionIdAscMinRawAsc(Long examId);
 
     @Modifying
-    @Query("delete from BandConversion b where b.examId = :examId")
-    void deleteByExamId(Long examId);
+    @Query("delete from BandConversion b where b.examId = :examId and b.sectionId is null")
+    void deleteOverall(Long examId);
+
+    @Modifying
+    @Query("delete from BandConversion b where b.examId = :examId and b.sectionId = :sectionId")
+    void deleteForSection(Long examId, Long sectionId);
 }

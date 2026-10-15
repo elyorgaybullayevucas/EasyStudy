@@ -12,7 +12,9 @@ export function AdminNav() {
   const items = [
     { href: "/admin", label: "Kurslar", match: (p: string) => p === "/admin" || p.startsWith("/admin/courses") },
     { href: "/admin/exams", label: "Mock imtihonlar", match: (p: string) => p.startsWith("/admin/exams") },
+    { href: "/admin/grading", label: "Tekshirish navbati", match: (p: string) => p.startsWith("/admin/grading") },
     { href: "/admin/posts", label: "Maqolalar", match: (p: string) => p.startsWith("/admin/posts") },
+    { href: "/admin/guide", label: "Yo'riqnoma", match: (p: string) => p.startsWith("/admin/guide") },
     ...(user?.role === "ADMIN"
       ? [
           { href: "/admin/categories", label: "Kategoriyalar", match: (p: string) => p.startsWith("/admin/categories") },

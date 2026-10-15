@@ -25,4 +25,12 @@ public class BandConversion {
 
     @Column(nullable = false, precision = 7, scale = 2)
     private BigDecimal scaled;
+
+    /** null = umumiy jadval; aks holda shu bo'lim uchun. */
+    @Column(name = "section_id")
+    private Long sectionId;
+
+    /** Natija yorlig'i (masalan "B2", "Level 4"). */
+    @Column(length = 40)
+    private String label;
 }

@@ -1,4 +1,4 @@
-import type { AttemptStatus, CategoryGroup, CourseLevel, QuestionType, UserRole } from "./types";
+import type { AttemptStatus, CategoryGroup, CourseLevel, PartType, QuestionType, ScoringMode, UserRole } from "./types";
 
 export const levelLabels: Record<CourseLevel, string> = {
   BEGINNER: "Boshlang'ich",
@@ -33,8 +33,27 @@ export const questionTypeLabels: Record<QuestionType, string> = {
   GAP_FILL: "Bo'sh joyni to'ldirish",
   TRUE_FALSE_NG: "True / False / Not Given",
   MATCHING: "Moslashtirish",
-  ESSAY: "Esse (qo'lda tekshiriladi)",
+  ESSAY: "Yozma javob (Writing, o'qituvchi tekshiradi)",
+  SPEAKING: "Ovozli javob (Speaking, o'qituvchi tekshiradi)",
 };
+
+export const partTypeLabels: Record<PartType, string> = {
+  LISTENING: "Listening",
+  READING: "Reading",
+  WRITING: "Writing",
+  SPEAKING: "Speaking",
+  MATH: "Matematika",
+  GENERAL: "Umumiy",
+};
+
+export const scoringModeLabels: Record<ScoringMode, string> = {
+  TOTAL: "Umumiy ball (jadval bo'yicha)",
+  SECTION_AVERAGE: "Bo'limlar o'rtachasi (IELTS, CEFR)",
+  SECTION_SUM: "Bo'limlar yig'indisi (SAT)",
+};
+
+export const formatSeconds = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+export const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
 
 export function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes} daq`;

@@ -23,7 +23,8 @@ public class MediaService {
     public enum Kind { VIDEO, AUDIO, IMAGE }
 
     private static final Map<String, String> VIDEO_TYPES = Map.of("video/mp4", "mp4", "video/webm", "webm", "video/quicktime", "mov");
-    private static final Map<String, String> AUDIO_TYPES = Map.of("audio/mpeg", "mp3", "audio/mp4", "m4a", "audio/ogg", "ogg", "audio/wav", "wav", "audio/x-wav", "wav");
+    private static final Map<String, String> AUDIO_TYPES = Map.of("audio/mpeg", "mp3", "audio/mp4", "m4a", "audio/ogg", "ogg",
+            "audio/wav", "wav", "audio/x-wav", "wav", "audio/webm", "webm", "video/webm", "webm");
     private static final Map<String, String> IMAGE_TYPES = Map.of("image/jpeg", "jpg", "image/png", "png", "image/webp", "webp");
     private static final SecureRandom RNG = new SecureRandom();
 
@@ -46,7 +47,7 @@ public class MediaService {
 
     /** Yuklash: tur va hajm tekshiriladi, kalit tasodifiy (taxmin qilib bo'lmaydi). */
     public String upload(MultipartFile file, Kind kind) {
-        String ct = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
+        String ct = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT).split(";")[0].trim();
         Map<String, String> allowed = switch (kind) { case VIDEO -> VIDEO_TYPES; case AUDIO -> AUDIO_TYPES; case IMAGE -> IMAGE_TYPES; };
         String ext = allowed.get(ct);
         if (ext == null) throw AppException.badRequest("Fayl turi qo'llab-quvvatlanmaydi: " + ct + ". Ruxsat: " + String.join(", ", allowed.keySet()));

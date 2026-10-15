@@ -11,6 +11,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByPublishedTrueOrderByFeaturedDescTitleAsc();
     List<Exam> findByPublishedTrueAndFeaturedTrueOrderByTitleAsc();
     List<Exam> findAllByOrderByCreatedAtDesc();
+    List<Exam> findByOwnerIdOrderByCreatedAtDesc(Long ownerId);
     Optional<Exam> findByIdAndPublishedTrue(Long id);
     boolean existsByCode(String code);
     long countByPublishedTrue();

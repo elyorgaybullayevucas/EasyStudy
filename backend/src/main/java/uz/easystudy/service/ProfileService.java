@@ -64,4 +64,9 @@ public class ProfileService {
                 attempts.countByUserId(userId),
                 attempts.countByUserIdAndStatusIn(userId, List.of(AttemptStatus.GRADED, AttemptStatus.SUBMITTED, AttemptStatus.EXPIRED)));
     }
+
+    /** Qo'lda baholanadigan savollar borligini aniqlash uchun yordamchi (kelajakda statistika). */
+    public static boolean needsManual(uz.easystudy.domain.Exam e) {
+        return e.getSections().stream().flatMap(s -> s.getQuestions().stream()).anyMatch(q -> q.getType().isManual());
+    }
 }

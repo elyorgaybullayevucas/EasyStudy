@@ -9,7 +9,7 @@ import { Alert } from "@/components/ui/Alert";
 import { CheckIcon, FileTextIcon, TimerIcon } from "@/components/ui/Icons";
 import { PageLoader } from "@/components/ui/Spinner";
 import { api, ApiError } from "@/lib/api";
-import { levelLabels, questionTypeLabels } from "@/lib/format";
+import { levelLabels, partTypeLabels, questionTypeLabels, scoringModeLabels } from "@/lib/format";
 import type { ExamDetail, QuestionType } from "@/lib/types";
 
 export default function ExamPage() {
@@ -42,6 +42,8 @@ export default function ExamPage() {
   const total = exam.sections.reduce((s, x) => s + x.durationMinutes, 0);
   const questions = exam.sections.flatMap((s) => s.questions);
   const types = [...new Set(questions.map((q) => q.type))] as QuestionType[];
+  const needsMic = exam.sections.some((s) => s.partType === "SPEAKING");
+  const manualParts = exam.sections.filter((s) => s.manual).map((s) => s.title);
 
   return (
     <>
@@ -56,7 +58,7 @@ export default function ExamPage() {
           <p className="mt-4 max-w-2xl text-lg text-slate-300">{exam.description}</p>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
             <span className="flex items-center gap-1.5"><TimerIcon width={16} height={16} />{total} daqiqa</span>
-            <span className="flex items-center gap-1.5"><FileTextIcon width={16} height={16} />{questions.length} ta savol</span>
+            <span className="flex items-center gap-1.5"><FileTextIcon width={16} height={16} />{questions.length} ta savol / vazifa</span>
             <span>{exam.sections.length} ta bo&apos;lim</span>
           </div>
         </div>
@@ -66,16 +68,23 @@ export default function ExamPage() {
         <div className="space-y-8">
           <section>
             <h2 className="text-xl font-bold">Imtihon tuzilmasi</h2>
+            <p className="mt-1 text-sm text-slate-500">Bo&apos;limlar ketma-ket ochiladi, har birining o&apos;z taymeri bor. Baholash: {scoringModeLabels[exam.scoringMode]}.</p>
             <ol className="card mt-4 divide-y divide-slate-100">
               {exam.sections.map((s, i) => (
                 <li key={s.id} className="flex items-center gap-4 px-5 py-4">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">{i + 1}</span>
-                  <div className="flex-1"><p className="font-medium">{s.title}</p><p className="text-xs text-slate-500">{s.questions.length} ta savol</p></div>
+                  <div className="flex-1">
+                    <p className="font-medium">{s.title} <span className="badge ml-1 bg-slate-100 text-slate-600">{partTypeLabels[s.partType]}</span></p>
+                    <p className="text-xs text-slate-500">{s.questions.length} ta {s.manual ? "vazifa · o'qituvchi baholaydi" : "savol · avtomatik tekshiriladi"}{s.audioUrl ? " · audio" : ""}</p>
+                  </div>
                   <span className="text-sm text-slate-500">{s.durationMinutes} daq</span>
                 </li>
               ))}
             </ol>
           </section>
+          {exam.instructions && (
+            <section className="card p-6"><h3 className="font-semibold">Imtihon haqida</h3><p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{exam.instructions}</p></section>
+          )}
           <section>
             <h2 className="text-xl font-bold">Savol turlari</h2>
             <div className="mt-3 flex flex-wrap gap-2">{types.map((t) => <span key={t} className="badge bg-slate-100 text-slate-700">{questionTypeLabels[t]}</span>)}</div>
@@ -83,8 +92,11 @@ export default function ExamPage() {
           <section className="card p-6">
             <h3 className="font-semibold">Qoidalar</h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              {["Taymer serverda ishlaydi; sahifani yopsangiz ham vaqt to'xtamaydi.", "Javoblar avtomatik saqlanadi, istalgan vaqtda davom ettirish mumkin.",
-                "Vaqt tugaganda javoblar avtomatik topshiriladi va baholanadi.", "Esse turidagi savollarni o'qituvchi tekshiradi."].map((r) => (
+              {["Har bo'lim \"Boshlash\" bosilganda ochiladi va taymeri serverda ishlaydi; sahifani yopsangiz ham vaqt to'xtamaydi.",
+                "Bo'limni yakunlagach unga qaytib bo'lmaydi (haqiqiy imtihondagidek).",
+                "Javoblar avtomatik saqlanadi. Vaqt tugaganda bo'lim o'zi yakunlanadi.",
+                ...(manualParts.length ? [`${manualParts.join(", ")} bo'limlarini o'qituvchi tekshiradi; natija 1-3 kun ichida kabinetda chiqadi.`] : []),
+                ...(needsMic ? ["Speaking uchun mikrofon kerak; javob bir marta yoziladi."] : [])].map((r) => (
                 <li key={r} className="flex gap-2"><CheckIcon width={16} height={16} className="mt-0.5 shrink-0 text-accent-600" />{r}</li>
               ))}
             </ul>
@@ -93,11 +105,9 @@ export default function ExamPage() {
         <aside>
           <div className="card sticky top-24 p-6">
             <p className="text-3xl font-bold">Bepul</p>
-            <p className="mt-1 text-sm text-slate-500">{total} daqiqa · {questions.length} savol</p>
+            <p className="mt-1 text-sm text-slate-500">{total} daqiqa · {exam.sections.length} bo&apos;lim</p>
             {error && <Alert className="mt-4">{error}</Alert>}
-            <button onClick={start} disabled={busy || loading} className="btn-primary btn-lg mt-5 w-full">
-              {busy ? "Boshlanmoqda..." : user ? "Imtihonni boshlash" : "Boshlash uchun kiring"}
-            </button>
+            <button onClick={start} disabled={busy || loading} className="btn-primary btn-lg mt-5 w-full">{busy ? "Boshlanmoqda..." : user ? "Imtihonni boshlash" : "Boshlash uchun kiring"}</button>
             {user && <Link href="/dashboard/exams" className="btn-secondary mt-3 w-full">Oldingi natijalarim</Link>}
           </div>
         </aside>

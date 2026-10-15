@@ -15,6 +15,10 @@ public interface AttemptRepository extends JpaRepository<Attempt, Long> {
     long countByUserId(Long userId);
     long countByUserIdAndStatusIn(Long userId, List<AttemptStatus> statuses);
 
+    /** Tekshirish navbati: o'qituvchi o'z imtihonlari, admin hammasi. */
+    @Query("select a from Attempt a where a.status in :statuses and (:ownerId is null or a.exam.owner.id = :ownerId) order by a.submittedAt desc, a.id desc")
+    List<Attempt> findForGrading(List<AttemptStatus> statuses, Long ownerId);
+
     /** [examId, attemptCount] */
     @Query("select a.exam.id, count(a) from Attempt a where a.exam.id in :ids group by a.exam.id")
     List<Object[]> attemptCounts(List<Long> ids);
