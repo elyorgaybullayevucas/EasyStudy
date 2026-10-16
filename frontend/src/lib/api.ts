@@ -3,6 +3,7 @@ import type {
   CourseDetail, CourseListItem, CourseProgress, DashboardStats, ExamAdminDetail, ExamDetail, ExamSummary,
   GradingAttempt, GradingRow, Lesson, MyCourse, Page, PartType, PostDetail, PostListItem, QuestionType, QuizAdmin,
   QuizPublic, QuizResult, ScoringMode, TeacherProfile, TemplateInfo, TokenResponse, User, UserRole,
+  NavigationMode,
 } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -276,6 +277,7 @@ export interface ExamInput {
   published: boolean;
   categoryId: number | null;
   scoringMode?: ScoringMode | null;
+  navigationMode?: NavigationMode | null;
   instructions?: string | null;
 }
 

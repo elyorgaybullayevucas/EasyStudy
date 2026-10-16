@@ -54,9 +54,24 @@ public class AttemptService {
         Attempt a = new Attempt();
         a.setUser(users.getReferenceById(userId));
         a.setExam(exam);
-        // Yuqori chegara: barcha bo'limlar + bo'limlar orasidagi tanaffuslar uchun 15 daqiqa
-        a.setExpiresAt(Instant.now().plusSeconds(minutes * 60L + 15 * 60L));
-        attempts.save(a);
+        Instant now = Instant.now();
+        if (exam.getNavigationMode() == NavigationMode.FREE) {
+            // DTM kabi: barcha bo'limlar bir vaqtda ochiladi, yagona taymer
+            Instant ends = now.plusSeconds(minutes * 60L + 5);
+            a.setExpiresAt(ends);
+            attempts.save(a);
+            for (Section s : exam.getSections()) {
+                AttemptSection st = new AttemptSection();
+                st.setAttemptId(a.getId());
+                st.setSectionId(s.getId());
+                st.setEndsAt(ends);
+                attemptSections.save(st);
+            }
+        } else {
+            // Yuqori chegara: barcha bo'limlar + bo'limlar orasidagi tanaffuslar uchun 15 daqiqa
+            a.setExpiresAt(now.plusSeconds(minutes * 60L + 15 * 60L));
+            attempts.save(a);
+        }
         audit.log(userId, "ATTEMPT_START", "exam:" + examId, ip);
         return toView(a);
     }
@@ -92,6 +107,7 @@ public class AttemptService {
     public AttemptView finishSection(Long userId, Long attemptId, Long sectionId) {
         Attempt a = owned(userId, attemptId);
         ensureInProgress(a);
+        if (a.getExam().getNavigationMode() == NavigationMode.FREE) return toView(a); // erkin rejimda bo'limlar alohida yopilmaydi
         AttemptSection st = attemptSections.findByAttemptIdAndSectionId(a.getId(), sectionId)
                 .orElseThrow(() -> AppException.conflict("Bo'lim boshlanmagan"));
         if (st.getFinishedAt() == null) st.setFinishedAt(Instant.now());
@@ -430,11 +446,13 @@ public class AttemptService {
         for (Section s : a.getExam().getSections()) {
             AttemptSection st = states.get(s.getId());
             boolean secPending = false;
+            int correct = 0;
             for (Question q : s.getQuestions()) {
                 max = max.add(q.getPoints());
                 Answer ans = byQ.get(q.getId());
                 boolean pending = q.getType().isManual() && ans != null && ans.getPoints() == null;
                 if (pending) { pendingCount++; secPending = true; }
+                if (ans != null && Boolean.TRUE.equals(ans.getIsCorrect()) && !q.getType().isManual()) correct++;
                 String audio = ans != null && ans.getResponse() != null && ans.getResponse().get("audioKey") instanceof String k ? media.url(k) : null;
                 rows.add(new AnswerResult(q.getId(), s.getId(), q.getType(), ans == null ? null : ans.getResponse(),
                         ans == null ? (q.getType().isManual() ? null : Boolean.FALSE) : ans.getIsCorrect(),
@@ -442,12 +460,28 @@ public class AttemptService {
                         ans != null && ans.isAiGraded()));
             }
             secs.add(new SectionResult(s.getId(), s.getTitle(), s.getPartType(), st == null ? null : st.getRawScore(),
-                    st == null ? null : st.getMaxScore(), st == null ? null : st.getScaledScore(), secPending));
+                    st == null ? null : st.getMaxScore(), st == null ? null : st.getScaledScore(), secPending,
+                    s.getQuestions().size(), correct, s.getDefaultPoints()));
         }
         List<BandConversion> all = bands.findByExamIdOrderBySectionIdAscMinRawAsc(a.getExam().getId());
         BigDecimal labelKey = a.getExam().getScoringMode() == ScoringMode.TOTAL ? a.getRawScore() : a.getScaledScore();
-        return new AttemptResult(a.getId(), a.getExam().getId(), a.getExam().getTitle(), a.getExam().getScoringMode(), a.getStatus(),
-                a.getRawScore(), max.setScale(2, RoundingMode.HALF_UP), a.getScaledScore(), label(all, labelKey), pendingCount, a.getAiStatus(), secs, rows);
+        String label = label(all, labelKey);
+        String tpl = a.getExam().getTemplateCode();
+        if (label == null && tpl != null && tpl.startsWith("IELTS")) label = ieltsCefr(a.getScaledScore());
+        return new AttemptResult(a.getId(), a.getExam().getId(), a.getExam().getTitle(), a.getExam().getScoringMode(), tpl,
+                a.getStatus(), a.getSubmittedAt(), a.getUser().getFullName(),
+                a.getRawScore(), max.setScale(2, RoundingMode.HALF_UP), a.getScaledScore(), label, pendingCount, a.getAiStatus(), secs, rows);
+    }
+
+    /** IELTS Test Report Form'dagi CEFR darajasi (rasmiy moslik). */
+    static String ieltsCefr(BigDecimal band) {
+        if (band == null) return null;
+        double b = band.doubleValue();
+        if (b >= 8.5) return "CEFR C2";
+        if (b >= 7.0) return "CEFR C1";
+        if (b >= 5.5) return "CEFR B2";
+        if (b >= 4.0) return "CEFR B1";
+        return "CEFR A2 va past";
     }
 
     private AttemptView toView(Attempt a) {
@@ -469,7 +503,8 @@ public class AttemptService {
                     if (r.get("audioKey") instanceof String k) r.put("audioUrl", media.url(k));
                     return r;
                 }));
-        return new AttemptView(a.getId(), a.getExam().getId(), a.getExam().getTitle(), a.getExam().getScoringMode(), a.getStatus(),
+        return new AttemptView(a.getId(), a.getExam().getId(), a.getExam().getTitle(), a.getExam().getScoringMode(),
+                a.getExam().getNavigationMode(), a.getExam().getTemplateCode(), a.getStatus(),
                 a.getStartedAt(), a.getExpiresAt(), a.getSubmittedAt(), a.getRawScore(), a.getScaledScore(), secs, current, ans);
     }
 

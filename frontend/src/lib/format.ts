@@ -1,4 +1,4 @@
-import type { AttemptStatus, CategoryGroup, CourseLevel, PartType, QuestionType, ScoringMode, UserRole } from "./types";
+import type { AttemptStatus, CategoryGroup, CourseLevel, NavigationMode, PartType, QuestionType, ScoringMode, UserRole } from "./types";
 
 export const levelLabels: Record<CourseLevel, string> = {
   BEGINNER: "Boshlang'ich",
@@ -51,6 +51,15 @@ export const scoringModeLabels: Record<ScoringMode, string> = {
   SECTION_AVERAGE: "Bo'limlar o'rtachasi (IELTS, CEFR)",
   SECTION_SUM: "Bo'limlar yig'indisi (SAT)",
 };
+
+export const navigationModeLabels: Record<NavigationMode, string> = {
+  SEQUENTIAL: "Ketma-ket bo'limlar, har birining taymeri (IELTS, SAT, TOPIK)",
+  FREE: "Barcha bo'limlar bir vaqtda, yagona taymer (DTM, Attestatsiya)",
+};
+
+/** IELTS Test Report Form'dagi CEFR mosligi. */
+export const ieltsCefr = (band: number | null | undefined) =>
+  band == null ? null : band >= 8.5 ? "C2" : band >= 7 ? "C1" : band >= 5.5 ? "B2" : band >= 4 ? "B1" : "A2";
 
 export const formatSeconds = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 export const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;

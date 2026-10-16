@@ -11,9 +11,20 @@ type Props = {
   onChange: (r: AnswerResponse) => void;
   disabled?: boolean;
   attemptId?: number | string;
+  /** Ko'rsatiladigan raqam (DTM: 1-90 ketma-ket). */
+  number?: number;
+  /** Review belgisi (haqiqiy CBT'dagi "Review" katakchasi). */
+  flagged?: boolean;
+  onFlag?: () => void;
+  /** Reading: matn alohida panelda ko'rsatiladi, kartada emas. */
+  hidePassage?: boolean;
+  /** Writing: topshiriq alohida panelda, kartada faqat javob maydoni. */
+  hidePrompt?: boolean;
+  /** Speaking: savol ochilishi bilan imtihonchi o'qiydi va yozish boshlanadi. */
+  autoStart?: boolean;
 };
 
-export function QuestionCard({ q, value, onChange, disabled, attemptId }: Props) {
+export function QuestionCard({ q, value, onChange, disabled, attemptId, number, flagged, onFlag, hidePassage, hidePrompt, autoStart }: Props) {
   const opts = q.options ?? [];
   const optionClass = (selected: boolean) =>
     cn("flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition",
@@ -21,15 +32,21 @@ export function QuestionCard({ q, value, onChange, disabled, attemptId }: Props)
       disabled && "cursor-default opacity-70");
 
   return (
-    <div className="card p-6" id={`q-${q.id}`}>
-      {q.passage && <div className="mb-4 whitespace-pre-wrap rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">{q.passage}</div>}
-      {q.imageUrl && (
+    <div className={cn("card p-6", flagged && "ring-2 ring-amber-300")} id={`q-${q.id}`}>
+      {q.passage && !hidePassage && <div className="mb-4 whitespace-pre-wrap rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">{q.passage}</div>}
+      {q.imageUrl && !hidePrompt && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={q.imageUrl} alt="" className="mb-4 max-h-96 w-full rounded-xl object-contain" onContextMenu={(e) => e.preventDefault()} />
       )}
       <div className="mb-4 flex items-start gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">{q.orderIndex}</span>
-        <p className="whitespace-pre-line font-medium">{q.prompt}</p>
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">{number ?? q.orderIndex}</span>
+        {!hidePrompt && <p className="flex-1 whitespace-pre-line font-medium">{q.prompt}</p>}
+        {hidePrompt && <p className="flex-1 text-sm text-slate-500">Javobingizni o&apos;ng tomondagi maydonga yozing.</p>}
+        {onFlag && (
+          <label className={cn("flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-xs", flagged ? "border-amber-400 bg-amber-50 text-amber-800" : "border-slate-200 text-slate-500 hover:bg-slate-50")} title="Keyinroq qaytib ko'rish uchun belgilash">
+            <input type="checkbox" className="accent-amber-500" checked={!!flagged} onChange={onFlag} />Review
+          </label>
+        )}
       </div>
 
       {(q.type === "SINGLE_CHOICE" || q.type === "TRUE_FALSE_NG") && (
@@ -77,7 +94,8 @@ export function QuestionCard({ q, value, onChange, disabled, attemptId }: Props)
 
       {q.type === "SPEAKING" && attemptId !== undefined && (
         <SpeakingRecorder attemptId={attemptId} questionId={q.id} prepSeconds={q.prepSeconds ?? 0} answerSeconds={q.answerSeconds ?? 120}
-          existingUrl={value?.audioUrl} disabled={disabled} onSaved={(audioUrl) => onChange({ audioKey: "saved", audioUrl })} />
+          existingUrl={value?.audioUrl} disabled={disabled} onSaved={(audioUrl) => onChange({ audioKey: "saved", audioUrl })}
+          readAloud={q.prompt} autoStart={autoStart} />
       )}
     </div>
   );

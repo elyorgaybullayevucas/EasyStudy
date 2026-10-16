@@ -1,5 +1,5 @@
 # Listening transkriptidan WAV audio yaratadi (Windows TTS, ovozlar: David/Zira).
-# Satr prefikslari: N: diktor, R: resepshn (ayol), D: Daniel (erkak), Z: kutubxonachi (ayol), P: pauza.
+# Satr prefikslari: N: diktor, R: resepshn (ayol), D: Daniel (erkak), Z: kutubxonachi (ayol), E: Emma (ayol), J: Jack (erkak), T: tutor (ayol), L: ma'ruzachi (erkak, sekin), P: pauza.
 # Foydalanish: powershell -ExecutionPolicy Bypass -File make_audio.ps1 -In ielts-mock1.txt -Out ielts-mock1.wav
 param(
   [string]$In = "ielts-mock1.txt",
@@ -23,6 +23,10 @@ Get-Content -Encoding UTF8 $In | ForEach-Object {
     "R:" { $synth.SelectVoice($female); $synth.Rate = -1 }
     "Z:" { $synth.SelectVoice($female); $synth.Rate = -1 }
     "D:" { $synth.SelectVoice($male); $synth.Rate = -1 }
+    "E:" { $synth.SelectVoice($female); $synth.Rate = 0 }
+    "J:" { $synth.SelectVoice($male); $synth.Rate = 0 }
+    "T:" { $synth.SelectVoice($female); $synth.Rate = -1 }
+    "L:" { $synth.SelectVoice($male); $synth.Rate = -2 }
     default { $synth.SelectVoice($female) }
   }
   $synth.Speak($text)

@@ -216,6 +216,8 @@ export interface AdminStats {
 export type QuestionType = "SINGLE_CHOICE" | "MULTI_CHOICE" | "GAP_FILL" | "TRUE_FALSE_NG" | "MATCHING" | "ESSAY" | "SPEAKING";
 export type PartType = "LISTENING" | "READING" | "WRITING" | "SPEAKING" | "MATH" | "GENERAL";
 export type ScoringMode = "TOTAL" | "SECTION_AVERAGE" | "SECTION_SUM";
+/** SEQUENTIAL: bo'limlar ketma-ket, har birining taymeri (IELTS). FREE: hammasi bir vaqtda, yagona taymer (DTM). */
+export type NavigationMode = "SEQUENTIAL" | "FREE";
 export type Option = { key: string; text: string };
 
 export interface ExamSummary {
@@ -229,6 +231,7 @@ export interface ExamSummary {
   category: CategoryBrief | null;
   templateCode: string | null;
   scoringMode: ScoringMode;
+  navigationMode: NavigationMode;
   parts: string[];
   totalMinutes: number;
   questionCount: number;
@@ -271,6 +274,7 @@ export interface ExamDetail {
   category: CategoryBrief | null;
   templateCode: string | null;
   scoringMode: ScoringMode;
+  navigationMode: NavigationMode;
   instructions: string | null;
   sections: SectionView[];
 }
@@ -297,6 +301,8 @@ export interface AttemptView {
   examId: number;
   examTitle: string;
   scoringMode: ScoringMode;
+  navigationMode: NavigationMode;
+  templateCode: string | null;
   status: AttemptStatus;
   startedAt: string;
   expiresAt: string;
@@ -332,6 +338,9 @@ export interface SectionResult {
   maxScore: number | null;
   scaledScore: number | null;
   pending: boolean;
+  questionCount: number;
+  correctCount: number;
+  pointsPerQuestion: number;
 }
 
 export interface AttemptResult {
@@ -339,7 +348,10 @@ export interface AttemptResult {
   examId: number;
   examTitle: string;
   scoringMode: ScoringMode;
+  templateCode: string | null;
   status: AttemptStatus;
+  submittedAt: string | null;
+  studentName: string;
   rawScore: number | null;
   maxScore: number;
   scaledScore: number | null;
@@ -390,6 +402,7 @@ export interface ExamAdminDetail {
   ownerName: string | null;
   templateCode: string | null;
   scoringMode: ScoringMode;
+  navigationMode: NavigationMode;
   instructions: string | null;
   sections: SectionAdminView[];
   bands: BandRow[];
@@ -412,6 +425,7 @@ export interface TemplateInfo {
   group: CategoryGroup | "PRACTICE";
   description: string;
   scoringMode: ScoringMode;
+  navigationMode: NavigationMode;
   scoringNote: string;
   totalMinutes: number;
   sections: TemplateSection[];

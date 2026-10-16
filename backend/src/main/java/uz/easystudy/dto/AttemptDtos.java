@@ -22,7 +22,8 @@ public final class AttemptDtos {
     public record SectionState(Long sectionId, String title, PartType partType, int orderIndex, int durationMinutes,
                                int questionCount, Instant startedAt, Instant endsAt, Instant finishedAt, String status) {}
 
-    public record AttemptView(Long id, Long examId, String examTitle, ScoringMode scoringMode, AttemptStatus status,
+    public record AttemptView(Long id, Long examId, String examTitle, ScoringMode scoringMode,
+                              uz.easystudy.domain.NavigationMode navigationMode, String templateCode, AttemptStatus status,
                               Instant startedAt, Instant expiresAt, Instant submittedAt,
                               BigDecimal rawScore, BigDecimal scaledScore,
                               List<SectionState> sections, Long currentSectionId,
@@ -33,9 +34,10 @@ public final class AttemptDtos {
                                String audioUrl, boolean pending, boolean aiGraded) {}
 
     public record SectionResult(Long sectionId, String title, PartType partType, BigDecimal rawScore, BigDecimal maxScore,
-                                BigDecimal scaledScore, boolean pending) {}
+                                BigDecimal scaledScore, boolean pending, int questionCount, int correctCount, BigDecimal pointsPerQuestion) {}
 
-    public record AttemptResult(Long id, Long examId, String examTitle, ScoringMode scoringMode, AttemptStatus status,
+    public record AttemptResult(Long id, Long examId, String examTitle, ScoringMode scoringMode, String templateCode,
+                                AttemptStatus status, Instant submittedAt, String studentName,
                                 BigDecimal rawScore, BigDecimal maxScore, BigDecimal scaledScore, String label,
                                 int pendingCount, uz.easystudy.domain.AiStatus aiStatus,
                                 List<SectionResult> sections, List<AnswerResult> answers) {}

@@ -68,14 +68,14 @@ export default function ExamPage() {
         <div className="space-y-8">
           <section>
             <h2 className="text-xl font-bold">Imtihon tuzilmasi</h2>
-            <p className="mt-1 text-sm text-slate-500">Bo&apos;limlar ketma-ket ochiladi, har birining o&apos;z taymeri bor. Baholash: {scoringModeLabels[exam.scoringMode]}.</p>
+            <p className="mt-1 text-sm text-slate-500">{exam.navigationMode === "FREE" ? `Haqiqiy imtihondagidek barcha bo'limlar bir vaqtda ochiq, yagona ${total} daqiqalik taymer, savollar orasida erkin yurasiz.` : "Haqiqiy imtihondagidek bo'limlar ketma-ket ochiladi, har birining o'z taymeri bor, bo'limga qaytib bo'lmaydi."} Baholash: {scoringModeLabels[exam.scoringMode]}.</p>
             <ol className="card mt-4 divide-y divide-slate-100">
               {exam.sections.map((s, i) => (
                 <li key={s.id} className="flex items-center gap-4 px-5 py-4">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">{i + 1}</span>
                   <div className="flex-1">
                     <p className="font-medium">{s.title} <span className="badge ml-1 bg-slate-100 text-slate-600">{partTypeLabels[s.partType]}</span></p>
-                    <p className="text-xs text-slate-500">{s.questions.length} ta {s.manual ? "vazifa · o'qituvchi baholaydi" : "savol · avtomatik tekshiriladi"}{s.audioUrl ? " · audio" : ""}</p>
+                    <p className="text-xs text-slate-500">{s.questions.length} ta {s.manual ? "vazifa · AI darhol baholaydi, o'qituvchi tasdiqlaydi" : "savol · avtomatik tekshiriladi"}{s.audioUrl ? " · audio" : ""}</p>
                   </div>
                   <span className="text-sm text-slate-500">{s.durationMinutes} daq</span>
                 </li>
@@ -92,11 +92,13 @@ export default function ExamPage() {
           <section className="card p-6">
             <h3 className="font-semibold">Qoidalar</h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              {["Har bo'lim \"Boshlash\" bosilganda ochiladi va taymeri serverda ishlaydi; sahifani yopsangiz ham vaqt to'xtamaydi.",
-                "Bo'limni yakunlagach unga qaytib bo'lmaydi (haqiqiy imtihondagidek).",
+              {[...(exam.navigationMode === "FREE"
+                  ? ["\"Boshlash\" bosilganda barcha bo'limlar ochiladi va yagona taymer serverda ishlaydi; sahifani yopsangiz ham vaqt to'xtamaydi.", "Fanlar va savollar orasida erkin yurasiz, javobni istalgan vaqt o'zgartirasiz. Vaqt tugaganda yoki \"Topshirish\" bosilganda natija darhol chiqadi."]
+                  : ["Har bo'lim \"Boshlash\" bosilganda ochiladi va taymeri serverda ishlaydi; sahifani yopsangiz ham vaqt to'xtamaydi.", "Bo'limni yakunlagach unga qaytib bo'lmaydi (haqiqiy imtihondagidek)."]),
                 "Javoblar avtomatik saqlanadi. Vaqt tugaganda bo'lim o'zi yakunlanadi.",
-                ...(manualParts.length ? [`${manualParts.join(", ")} bo'limlarini o'qituvchi tekshiradi; natija 1-3 kun ichida kabinetda chiqadi.`] : []),
-                ...(needsMic ? ["Speaking uchun mikrofon kerak; javob bir marta yoziladi."] : [])].map((r) => (
+                ...(exam.sections.some((s) => s.partType === "LISTENING") ? ["Listening audiosi bo'lim boshlanishi bilan avtomatik ijro etiladi va faqat bir marta eshittiriladi; to'xtatib yoki qaytarib bo'lmaydi."] : []),
+                ...(manualParts.length ? [`${manualParts.join(", ")} javoblari AI tomonidan darhol baholanadi; o'qituvchi keyinroq tasdiqlaydi.`] : []),
+                ...(needsMic ? ["Speaking: har savol ovoz bilan o'qiladi, javob mikrofonga bir marta yoziladi."] : [])].map((r) => (
                 <li key={r} className="flex gap-2"><CheckIcon width={16} height={16} className="mt-0.5 shrink-0 text-accent-600" />{r}</li>
               ))}
             </ul>

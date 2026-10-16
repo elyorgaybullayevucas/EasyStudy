@@ -48,7 +48,7 @@ public class ExamService {
         }
         return list.stream().map(e -> new ExamSummary(
                 e.getId(), e.getCode(), e.getTitle(), e.getDescription(), e.getLevel(), e.isFeatured(), e.isPublished(),
-                CategoryService.brief(e.getCategory()), e.getTemplateCode(), e.getScoringMode(),
+                CategoryService.brief(e.getCategory()), e.getTemplateCode(), e.getScoringMode(), e.getNavigationMode(),
                 e.getSections().stream().map(Section::getTitle).toList(),
                 e.getSections().stream().mapToInt(Section::getDurationMinutes).sum(),
                 e.getSections().stream().mapToInt(s -> s.getQuestions().size()).sum(),
@@ -68,7 +68,7 @@ public class ExamService {
 
     public ExamDetail toDetail(Exam e) {
         return new ExamDetail(e.getId(), e.getCode(), e.getTitle(), e.getDescription(), e.getLevel(), e.isFeatured(),
-                CategoryService.brief(e.getCategory()), e.getTemplateCode(), e.getScoringMode(), e.getInstructions(),
+                CategoryService.brief(e.getCategory()), e.getTemplateCode(), e.getScoringMode(), e.getNavigationMode(), e.getInstructions(),
                 e.getSections().stream().map(s -> new SectionView(
                         s.getId(), s.getTitle(), s.getPartType(), s.getOrderIndex(), s.getDurationMinutes(), s.getInstructions(),
                         media.url(s.getAudioKey()), isManual(s),
@@ -129,7 +129,7 @@ public class ExamService {
         return new ExamAdminDetail(e.getId(), e.getCode(), e.getTitle(), e.getDescription(), e.getLevel(), e.isFeatured(),
                 e.isPublished(), CategoryService.brief(e.getCategory()),
                 e.getOwner() == null ? null : e.getOwner().getId(), e.getOwner() == null ? null : e.getOwner().getFullName(),
-                e.getTemplateCode(), e.getScoringMode(), e.getInstructions(), secs, overall);
+                e.getTemplateCode(), e.getScoringMode(), e.getNavigationMode(), e.getInstructions(), secs, overall);
     }
 
     private QuestionAdminView toAdminQuestion(Question q) {
@@ -169,6 +169,7 @@ public class ExamService {
         e.setTemplateCode(t.info().code());
         apply(e, in);
         e.setScoringMode(t.info().scoringMode());
+        e.setNavigationMode(t.info().navigationMode());
         if (e.getInstructions() == null || e.getInstructions().isBlank()) e.setInstructions(t.info().description());
         exams.save(e);
 
@@ -248,6 +249,7 @@ public class ExamService {
         e.setPublished(in.published());
         e.setCategory(categoryService.require(in.categoryId()));
         if (in.scoringMode() != null) e.setScoringMode(in.scoringMode());
+        if (in.navigationMode() != null) e.setNavigationMode(in.navigationMode());
         e.setInstructions(in.instructions());
     }
 

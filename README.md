@@ -15,8 +15,8 @@ Stek: Spring Boot 3 (Java 21) + PostgreSQL 16 + Next.js 15 (TypeScript, Tailwind
 - Kurslar katalogi (qidiruv, yo'nalish, daraja, sahifalash), kurs sahifasi, bepul tanishuv darsi, yozilish
 - O'quv rejimi: video (YouTube / Vimeo / mp4), konspekt, "Darsni tugatdim", testlar, progress
 - Sertifikat: kurs to'liq tugagach avtomatik, noyob kod, PDF chop etish, ochiq tekshirish sahifasi
-- Mock imtihonlar haqiqiy formatda: bo'limlar ketma-ket (har birining o'z taymeri, qaytib bo'lmaydi), Listening audio, Reading matnlari, Writing (so'z hisobi, minimal so'z), Speaking (brauzerda mikrofon orqali yozish, tayyorlanish/javob vaqti), avtosaqlash
-- Baholash: Listening/Reading avtomatik + bo'lim konversiya jadvali; Writing/Speaking o'qituvchi tekshiradi (ball + izoh); umumiy natija usuli: IELTS o'rtacha (.5 yaxlitlash), SAT yig'indi, TOPIK/DTM umumiy ball → daraja yorlig'i
+- Mock imtihonlar haqiqiy (computer-delivered) formatda. Ikki navigatsiya rejimi: SEQUENTIAL - bo'limlar ketma-ket, har birining o'z taymeri, qaytib bo'lmaydi (IELTS, SAT, TOPIK); FREE - barcha bo'limlar bir vaqtda ochiq, yagona taymer, 1-90 ketma-ket raqamlash, erkin yurish (DTM, Attestatsiya). Listening audiosi bo'lim boshlanishi bilan avtomatik, bir marta, to'xtatib/qaytarib bo'lmaydi (yangilansa o'z joyidan davom etadi), tugagach 2 daqiqa tekshirish; Reading - matn chapda, savollar o'ngda, Passage tablari; Writing - topshiriq chapda, javob o'ngda, so'z hisobi; Speaking - savolma-savol, imtihonchi ovozi (brauzer TTS) + mikrofonga yozish; har savolda "Review" belgisi va pastki navigatsiya paneli; avtosaqlash
+- Baholash real tizim bilan bir xil: Listening/Reading avtomatik + rasmiy 40 savollik band jadvallari; Writing (Task 1 + 2 × Task 2)/3, Speaking 0-9; umumiy IELTS band = 4 ko'nikma o'rtachasi (.25 → .5, .75 → keyingi butun) + CEFR; DTM = to'g'ri javoblar × koeffitsient (1.1 / 3.1 / 2.1, maks 189); SAT yig'indi; TOPIK umumiy ball → daraja. Natija sahifasi IELTS uchun Test Report Form, DTM uchun natija varaqasi ko'rinishida
 - Imtihon shablonlari: IELTS Academic/General, Digital SAT, TOPIK I/II, Milliy sertifikat (ingliz tili, fan), DTM (1.1/2.1/3.1 ball), Attestatsiya, bo'limli mashqlar (IELTS Listening/Reading/Writing/Speaking, DTM fan), bo'sh. Shablon bo'limlar, vaqt, ball, rasmiy konversiya jadvallari va Writing/Speaking vazifalarini tayyor beradi
 - **AI tekshiruv:** Writing (va transkripsiya bo'lsa Speaking) javoblari topshirilgach Claude tomonidan rasmiy mezonlar asosida darhol baholanadi, izoh bilan; umumiy band shu zahoti chiqadi. O'qituvchi keyin ko'rib ballni o'zgartirishi mumkin
 - **Tayyor real mock'lar:** IELTS Academic Full Mock 1 (Listening 20 savol + audio, Reading 2 matn 20 savol, Writing 2 task, Speaking 3 qism) va DTM Mock 1 (90 savol: ona tili, matematika, tarix, matematika-mutaxassislik, fizika)
@@ -62,7 +62,7 @@ Narx taxmini (Claude Opus 5.5): bitta IELTS Writing task ≈ 1.5–2k token kiri
 
 ### Real mock materiallari
 
-- `backend/.../V9__seed_ielts_dtm_mocks.sql`: IELTS Academic Mock 1 va DTM Mock 1 (savollar, javob kalitlari, band jadvallari).
+- `backend/.../V9__seed_ielts_dtm_mocks.sql` + `V10__real_format.sql`: IELTS Academic Mock 1 to'liq real hajmda (Listening 4 qism / 40 savol, Reading 3 matn / 40 savol, Writing 2 task, Speaking 9 savol, rasmiy band jadvallari) va DTM Mock 1 (5 fan, 90 savol, FREE rejim, 180 daqiqa).
 - Listening audio: `scripts/listening/ielts-mock1.txt` transkripti → `make_audio.ps1` (Windows TTS) → WAV → `scripts/attach_media.py` bilan bo'limga biriktiriladi:
 
 ```bash

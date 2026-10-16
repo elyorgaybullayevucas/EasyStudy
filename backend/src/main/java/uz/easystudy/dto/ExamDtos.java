@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import uz.easystudy.domain.CourseLevel;
+import uz.easystudy.domain.NavigationMode;
 import uz.easystudy.domain.PartType;
 import uz.easystudy.domain.QuestionType;
 import uz.easystudy.domain.ScoringMode;
@@ -21,12 +22,12 @@ public final class ExamDtos {
     // ---------- talaba ko'rinishi: answer_key YO'Q ----------
     public record ExamSummary(Long id, String code, String title, String description, CourseLevel level,
                               boolean featured, boolean published, CategoryBrief category, String templateCode,
-                              ScoringMode scoringMode, List<String> parts,
+                              ScoringMode scoringMode, NavigationMode navigationMode, List<String> parts,
                               int totalMinutes, int questionCount, long attemptCount) {}
 
     public record ExamDetail(Long id, String code, String title, String description, CourseLevel level,
                              boolean featured, CategoryBrief category, String templateCode, ScoringMode scoringMode,
-                             String instructions, List<SectionView> sections) {}
+                             NavigationMode navigationMode, String instructions, List<SectionView> sections) {}
 
     public record SectionView(Long id, String title, PartType partType, int orderIndex, int durationMinutes,
                               String instructions, String audioUrl, boolean manual, List<QuestionView> questions) {}
@@ -49,8 +50,8 @@ public final class ExamDtos {
 
     public record ExamAdminDetail(Long id, String code, String title, String description, CourseLevel level,
                                   boolean featured, boolean published, CategoryBrief category, Long ownerId,
-                                  String ownerName, String templateCode, ScoringMode scoringMode, String instructions,
-                                  List<SectionAdminView> sections, List<BandRow> bands) {}
+                                  String ownerName, String templateCode, ScoringMode scoringMode, NavigationMode navigationMode,
+                                  String instructions, List<SectionAdminView> sections, List<BandRow> bands) {}
 
     public record ExamInput(
             @NotBlank @Size(max = 40) String code,
@@ -61,6 +62,7 @@ public final class ExamDtos {
             boolean published,
             Long categoryId,
             ScoringMode scoringMode,
+            NavigationMode navigationMode,
             String instructions) {}
 
     public record SectionInput(
@@ -93,5 +95,5 @@ public final class ExamDtos {
                                   int questionCount, String questionTypes, String instructions, boolean manual) {}
 
     public record TemplateInfo(String code, String title, String group, String description, ScoringMode scoringMode,
-                               String scoringNote, int totalMinutes, List<TemplateSection> sections) {}
+                               NavigationMode navigationMode, String scoringNote, int totalMinutes, List<TemplateSection> sections) {}
 }

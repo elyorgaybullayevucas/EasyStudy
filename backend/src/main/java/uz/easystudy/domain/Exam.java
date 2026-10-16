@@ -51,6 +51,10 @@ public class Exam {
     @Column(name = "template_code", length = 40)
     private String templateCode;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "navigation_mode", nullable = false, length = 20)
+    private NavigationMode navigationMode = NavigationMode.SEQUENTIAL;
+
     @Column(columnDefinition = "text")
     private String instructions;
 

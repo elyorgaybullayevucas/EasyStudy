@@ -9,10 +9,10 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Alert } from "@/components/ui/Alert";
 import { PageLoader } from "@/components/ui/Spinner";
 import { api, ApiError, type ExamInput, type ExamQuestionInput, type SectionInput } from "@/lib/api";
-import { cn, groupLabels, levelLabels, partTypeLabels, questionTypeLabels, scoringModeLabels } from "@/lib/format";
-import type { BandRow, Category, CourseLevel, ExamAdminDetail, PartType, QuestionType, ScoringMode, SectionAdminView, TemplateInfo } from "@/lib/types";
+import { cn, groupLabels, levelLabels, navigationModeLabels, partTypeLabels, questionTypeLabels, scoringModeLabels } from "@/lib/format";
+import type { BandRow, Category, CourseLevel, ExamAdminDetail, PartType, QuestionType, ScoringMode, SectionAdminView, TemplateInfo, NavigationMode } from "@/lib/types";
 
-const emptyExam: ExamInput = { code: "", title: "", description: "", level: "INTERMEDIATE", featured: false, published: false, categoryId: null, scoringMode: "TOTAL", instructions: "" };
+const emptyExam: ExamInput = { code: "", title: "", description: "", level: "INTERMEDIATE", featured: false, published: false, categoryId: null, scoringMode: "TOTAL", navigationMode: "SEQUENTIAL", instructions: "" };
 
 export default function ExamEditorPage() {
   const params = useParams<{ id: string }>();
@@ -34,7 +34,7 @@ export default function ExamEditorPage() {
     if (isNew) return;
     api.admin.exam(examId).then((e) => {
       setExam(e);
-      setForm({ code: e.code, title: e.title, description: e.description ?? "", level: e.level, featured: e.featured, published: e.published, categoryId: e.category?.id ?? null, scoringMode: e.scoringMode, instructions: e.instructions ?? "" });
+      setForm({ code: e.code, title: e.title, description: e.description ?? "", level: e.level, featured: e.featured, published: e.published, categoryId: e.category?.id ?? null, scoringMode: e.scoringMode, navigationMode: e.navigationMode, instructions: e.instructions ?? "" });
     }).catch((e) => setError(e instanceof ApiError ? e.message : "Yuklab bo'lmadi"));
   }, [examId, isNew]);
 
@@ -158,6 +158,14 @@ export default function ExamEditorPage() {
               <label className="label">Baholash usuli</label>
               <select className="input" value={form.scoringMode ?? "TOTAL"} onChange={(e) => setForm({ ...form, scoringMode: e.target.value as ScoringMode })}>
                 {(Object.keys(scoringModeLabels) as ScoringMode[]).map((m) => <option key={m} value={m}>{scoringModeLabels[m]}</option>)}
+              </select>
+            </div>
+          )}
+          {!isNew && (
+            <div>
+              <label className="label">Bo&apos;limlar tartibi (haqiqiy imtihon formati)</label>
+              <select className="input" value={form.navigationMode ?? "SEQUENTIAL"} onChange={(e) => setForm({ ...form, navigationMode: e.target.value as NavigationMode })}>
+                {(Object.keys(navigationModeLabels) as NavigationMode[]).map((m) => <option key={m} value={m}>{navigationModeLabels[m]}</option>)}
               </select>
             </div>
           )}

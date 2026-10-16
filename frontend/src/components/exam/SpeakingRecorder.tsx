@@ -5,14 +5,15 @@ import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { formatSeconds } from "@/lib/format";
 
-type Phase = "idle" | "prep" | "recording" | "uploading" | "done";
+type Phase = "idle" | "asking" | "prep" | "recording" | "uploading" | "done";
 
 /**
  * Speaking javobi: tayyorlanish vaqti -> yozish (maksimal answerSeconds) -> serverga yuklash.
  * Haqiqiy imtihondagidek bir marta yoziladi; qayta yozish faqat yuklash xato bo'lsa.
  */
-export function SpeakingRecorder({ attemptId, questionId, prepSeconds, answerSeconds, existingUrl, disabled, onSaved }:
-  { attemptId: number | string; questionId: number; prepSeconds: number; answerSeconds: number; existingUrl?: string | null; disabled?: boolean; onSaved: (url: string) => void }) {
+export function SpeakingRecorder({ attemptId, questionId, prepSeconds, answerSeconds, existingUrl, disabled, onSaved, readAloud, autoStart }:
+  { attemptId: number | string; questionId: number; prepSeconds: number; answerSeconds: number; existingUrl?: string | null; disabled?: boolean;
+    onSaved: (url: string) => void; /** Imtihonchi ovozi bilan o'qiladigan savol matni */ readAloud?: string; /** Savol ochilishi bilan avtomatik boshlash */ autoStart?: boolean }) {
   const [phase, setPhase] = useState<Phase>(existingUrl ? "done" : "idle");
   const [left, setLeft] = useState(0);
   const [error, setError] = useState("");
@@ -22,7 +23,7 @@ export function SpeakingRecorder({ attemptId, questionId, prepSeconds, answerSec
   const chunks = useRef<Blob[]>([]);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => () => { if (timer.current) clearInterval(timer.current); rec.current?.stream.getTracks().forEach((t) => t.stop()); }, []);
+  useEffect(() => () => { if (timer.current) clearInterval(timer.current); rec.current?.stream.getTracks().forEach((t) => t.stop()); if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel(); }, []);
 
   const countdown = (seconds: number, onEnd: () => void) => {
     setLeft(seconds);
@@ -66,13 +67,40 @@ export function SpeakingRecorder({ attemptId, questionId, prepSeconds, answerSec
     }
   };
 
-  const begin = () => {
-    setError("");
+  const afterQuestion = () => {
     if (prepSeconds > 0) {
       setPhase("prep");
       countdown(prepSeconds, startRecording);
     } else startRecording();
   };
+
+  /** Haqiqiy imtihondagidek: avval imtihonchi savolni o'qiydi (brauzer ovozi), keyin tayyorlanish/javob. */
+  const begin = () => {
+    setError("");
+    const text = readAloud?.replace(/\s+/g, " ").trim();
+    if (text && typeof window !== "undefined" && "speechSynthesis" in window) {
+      setPhase("asking");
+      const u = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      const en = voices.find((v) => /^en[-_](GB|AU|IE)/i.test(v.lang)) ?? voices.find((v) => /^en/i.test(v.lang));
+      if (en) u.voice = en;
+      u.lang = en?.lang ?? "en-GB";
+      u.rate = 0.95;
+      let done = false;
+      const finish = () => { if (done) return; done = true; afterQuestion(); };
+      u.onend = finish;
+      u.onerror = finish;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+      setTimeout(finish, Math.min(60000, 2000 + text.length * 90)); // ovoz ishlamasa ham davom etadi
+    } else afterQuestion();
+  };
+
+  const started = useRef(false);
+  useEffect(() => {
+    if (autoStart && !disabled && phase === "idle" && !started.current) { started.current = true; begin(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, disabled]);
 
   const stop = () => {
     if (timer.current) clearInterval(timer.current);
@@ -87,6 +115,13 @@ export function SpeakingRecorder({ attemptId, questionId, prepSeconds, answerSec
           <p className="text-xs text-slate-500">
             {prepSeconds > 0 ? `${formatSeconds(prepSeconds)} tayyorlanish, ` : ""}{formatSeconds(answerSeconds)} gacha javob. Yozish avtomatik boshlanadi va tugaydi.
           </p>
+        </div>
+      )}
+      {phase === "asking" && (
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-lg">🗣</span>
+          <p className="text-sm">Imtihonchi savolni o&apos;qimoqda… tinglang.</p>
+          <button type="button" onClick={() => { window.speechSynthesis?.cancel(); afterQuestion(); }} className="btn-ghost btn-sm">O&apos;tkazib yuborish</button>
         </div>
       )}
       {phase === "prep" && (

@@ -1,5 +1,6 @@
 package uz.easystudy.service;
 
+import uz.easystudy.domain.NavigationMode;
 import uz.easystudy.domain.PartType;
 import uz.easystudy.domain.ScoringMode;
 import uz.easystudy.dto.ExamDtos.BandRow;
@@ -61,10 +62,17 @@ public final class ExamTemplates {
     private static final List<SeedQuestion> IELTS_WRITING = List.of(
             new SeedQuestion("Task 1. (Academic: grafik/jadval/diagramma tavsifi; General: xat.) Kamida 150 so'z. Tavsiya: 20 daqiqa.", "ESSAY", d("9"), d("1"), 150, null, null),
             new SeedQuestion("Task 2. Berilgan mavzuda esse yozing. Kamida 250 so'z. Tavsiya: 40 daqiqa.", "ESSAY", d("9"), d("2"), 250, null, null));
+    /** Haqiqiy imtihondagidek: har savol alohida so'raladi (ovoz bilan o'qiladi) va yoziladi. Part 1: 4 savol, Part 2: cue card, Part 3: 4 savol. */
     private static final List<SeedQuestion> IELTS_SPEAKING = List.of(
-            new SeedQuestion("Part 1. O'zingiz, uyingiz, ishingiz/o'qishingiz va qiziqishlaringiz haqida savollar.", "SPEAKING", d("9"), d("1"), null, 10, 240),
-            new SeedQuestion("Part 2. Cue card: mavzu bo'yicha 1-2 daqiqa gapiring (1 daqiqa tayyorlanish).", "SPEAKING", d("9"), d("1"), null, 60, 120),
-            new SeedQuestion("Part 3. Part 2 mavzusi bo'yicha chuqurroq muhokama savollari.", "SPEAKING", d("9"), d("1"), null, 10, 300));
+            new SeedQuestion("Part 1. (1-savol) O'zingiz haqingizda: ish/o'qish.", "SPEAKING", d("9"), d("1"), null, 0, 45),
+            new SeedQuestion("Part 1. (2-savol) Yashash joyingiz.", "SPEAKING", d("9"), d("1"), null, 0, 45),
+            new SeedQuestion("Part 1. (3-savol) Qiziqishlaringiz.", "SPEAKING", d("9"), d("1"), null, 0, 45),
+            new SeedQuestion("Part 1. (4-savol) Kundalik hayot.", "SPEAKING", d("9"), d("1"), null, 0, 45),
+            new SeedQuestion("Part 2. Cue card: mavzu bo'yicha 1-2 daqiqa gapiring (1 daqiqa tayyorlanish).", "SPEAKING", d("9"), d("2"), null, 60, 120),
+            new SeedQuestion("Part 3. (1-savol) Part 2 mavzusi bo'yicha muhokama.", "SPEAKING", d("9"), d("1"), null, 0, 60),
+            new SeedQuestion("Part 3. (2-savol) Muhokama.", "SPEAKING", d("9"), d("1"), null, 0, 60),
+            new SeedQuestion("Part 3. (3-savol) Muhokama.", "SPEAKING", d("9"), d("1"), null, 0, 60),
+            new SeedQuestion("Part 3. (4-savol) Muhokama.", "SPEAKING", d("9"), d("1"), null, 0, 60));
     private static final List<SeedQuestion> MILLIY_WRITING = List.of(
             new SeedQuestion("Task 1. Rasmiy/norasmiy xat yoki hisobot. Kamida 120 so'z.", "ESSAY", d("100"), d("1"), 120, null, null),
             new SeedQuestion("Task 2. Esse: fikr bildirish / muammo-yechim. Kamida 200 so'z.", "ESSAY", d("100"), d("1"), 200, null, null));
@@ -85,27 +93,27 @@ public final class ExamTemplates {
     public static final List<Template> ALL = List.of(
             new Template(new TemplateInfo("IELTS_ACADEMIC", "IELTS Academic", "INTERNATIONAL",
                     "4 ta bo'lim: Listening (40 savol), Reading (40 savol), Writing (2 task), Speaking (3 part). Har bo'lim band 1-9, umumiy band = o'rtacha.",
-                    ScoringMode.SECTION_AVERAGE, "Listening/Reading: to'g'ri javoblar soni -> band (rasmiy jadval). Writing/Speaking: o'qituvchi band qo'yadi (Task 2 vazni 2).", 170,
+                    ScoringMode.SECTION_AVERAGE, NavigationMode.SEQUENTIAL, "Listening/Reading: to'g'ri javoblar soni -> band (rasmiy jadval). Writing/Speaking: AI/o'qituvchi band qo'yadi (Task 2 vazni 2). Umumiy band = 4 bo'lim o'rtachasi (.25 -> .5, .75 -> keyingi butun).", 167,
                     List.of(
-                            s("Listening", PartType.LISTENING, 40, "1", 40, "GAP_FILL, SINGLE_CHOICE, MATCHING", "4 ta qism, 40 savol. Audio bir marta eshittiriladi. Javoblarni ko'chirish uchun 10 daqiqa qo'shilgan.", false),
+                            s("Listening", PartType.LISTENING, 32, "1", 40, "GAP_FILL, SINGLE_CHOICE, MATCHING", "4 ta qism, 40 savol. Audio bo'lim boshlanishi bilan avtomatik ijro etiladi va bir marta eshittiriladi (to'xtatib/qaytarib bo'lmaydi). Audio tugagach javoblarni tekshirish uchun 2 daqiqa.", false),
                             s("Reading", PartType.READING, 60, "1", 40, "TRUE_FALSE_NG, GAP_FILL, SINGLE_CHOICE, MATCHING", "3 ta matn, 40 savol, 60 daqiqa.", false),
                             s("Writing", PartType.WRITING, 60, "9", 2, "ESSAY", "Task 1 (150+ so'z, 20 daq) va Task 2 (250+ so'z, 40 daq).", true),
-                            s("Speaking", PartType.SPEAKING, 15, "9", 3, "SPEAKING", "3 qism: suhbat, cue card (1 daqiqa tayyorlanish, 2 daqiqa javob), muhokama. Mikrofon orqali yoziladi.", true))),
+                            s("Speaking", PartType.SPEAKING, 15, "9", 9, "SPEAKING", "3 qism, 9 savol: Part 1 (4 qisqa savol), Part 2 cue card (1 daqiqa tayyorlanish, 2 daqiqa javob), Part 3 (4 muhokama savoli). Savollar ovoz bilan o'qiladi, javob mikrofonga yoziladi.", true))),
                     Map.of(0, IELTS_LISTENING, 1, IELTS_READING_AC), List.of(), Map.of(2, IELTS_WRITING, 3, IELTS_SPEAKING)),
 
             new Template(new TemplateInfo("IELTS_GENERAL", "IELTS General Training", "INTERNATIONAL",
                     "Listening, Reading (GT jadvali), Writing (xat + esse), Speaking.",
-                    ScoringMode.SECTION_AVERAGE, "Reading GT konversiyasi Academic'dan farq qiladi (jadval tayyor).", 170,
+                    ScoringMode.SECTION_AVERAGE, NavigationMode.SEQUENTIAL, "Reading GT konversiyasi Academic'dan farq qiladi (jadval tayyor).", 167,
                     List.of(
-                            s("Listening", PartType.LISTENING, 40, "1", 40, "GAP_FILL, SINGLE_CHOICE, MATCHING", "4 qism, 40 savol.", false),
+                            s("Listening", PartType.LISTENING, 32, "1", 40, "GAP_FILL, SINGLE_CHOICE, MATCHING", "4 qism, 40 savol. Audio avtomatik, bir marta.", false),
                             s("Reading", PartType.READING, 60, "1", 40, "TRUE_FALSE_NG, GAP_FILL, SINGLE_CHOICE", "3 bo'lim, 40 savol.", false),
                             s("Writing", PartType.WRITING, 60, "9", 2, "ESSAY", "Task 1 xat (150+ so'z), Task 2 esse (250+ so'z).", true),
-                            s("Speaking", PartType.SPEAKING, 15, "9", 3, "SPEAKING", "3 qism.", true))),
+                            s("Speaking", PartType.SPEAKING, 15, "9", 9, "SPEAKING", "3 qism, 9 savol.", true))),
                     Map.of(0, IELTS_LISTENING, 1, IELTS_READING_GT), List.of(), Map.of(2, IELTS_WRITING, 3, IELTS_SPEAKING)),
 
             new Template(new TemplateInfo("SAT", "Digital SAT", "INTERNATIONAL",
                     "Reading and Writing (54 savol, 64 daq) va Math (44 savol, 70 daq). Har bo'lim 200-800, umumiy 400-1600.",
-                    ScoringMode.SECTION_SUM, "Har bo'lim: to'g'ri javoblar -> 200-800 shkala (chiziqli yaqinlashuv), umumiy = yig'indi.", 134,
+                    ScoringMode.SECTION_SUM, NavigationMode.SEQUENTIAL, "Har bo'lim: to'g'ri javoblar -> 200-800 shkala (chiziqli yaqinlashuv), umumiy = yig'indi.", 134,
                     List.of(
                             s("Reading and Writing", PartType.READING, 64, "1", 54, "SINGLE_CHOICE", "2 modul, 54 savol, 64 daqiqa. Har savol 4 variantli.", false),
                             s("Math", PartType.MATH, 70, "1", 44, "SINGLE_CHOICE, GAP_FILL", "2 modul, 44 savol, 70 daqiqa. Kalkulyator ruxsat. Ochiq javobli savollar GAP_FILL.", false))),
@@ -113,7 +121,7 @@ public final class ExamTemplates {
 
             new Template(new TemplateInfo("TOPIK_I", "TOPIK I (1-2 daraja)", "INTERNATIONAL",
                     "Listening (30 savol, 40 daq) va Reading (40 savol, 60 daq). Jami 200 ball: 80+ = 1-daraja, 140+ = 2-daraja.",
-                    ScoringMode.TOTAL, "Savol ballari 3-4 (rasmiy taqsimot bo'yicha o'zgartiring). Umumiy ball -> daraja.", 100,
+                    ScoringMode.TOTAL, NavigationMode.SEQUENTIAL, "Savol ballari 3-4 (rasmiy taqsimot bo'yicha o'zgartiring). Umumiy ball -> daraja.", 100,
                     List.of(
                             s("듣기 Listening", PartType.LISTENING, 40, "3.33", 30, "SINGLE_CHOICE", "30 savol, 100 ball.", false),
                             s("읽기 Reading", PartType.READING, 60, "2.5", 40, "SINGLE_CHOICE", "40 savol, 100 ball.", false))),
@@ -121,7 +129,7 @@ public final class ExamTemplates {
 
             new Template(new TemplateInfo("TOPIK_II", "TOPIK II (3-6 daraja)", "INTERNATIONAL",
                     "Listening (50 savol), Writing (4 vazifa), Reading (50 savol). Jami 300 ball: 120/150/190/230 = 3/4/5/6-daraja.",
-                    ScoringMode.TOTAL, "Writing: 51-52 (10 ball), 53 (30), 54 (50) o'qituvchi baholaydi.", 180,
+                    ScoringMode.TOTAL, NavigationMode.SEQUENTIAL, "Writing: 51-52 (10 ball), 53 (30), 54 (50) o'qituvchi baholaydi.", 180,
                     List.of(
                             s("듣기 Listening", PartType.LISTENING, 60, "2", 50, "SINGLE_CHOICE", "50 savol, 100 ball.", false),
                             s("쓰기 Writing", PartType.WRITING, 50, "25", 4, "ESSAY", "4 vazifa, 100 ball.", true),
@@ -131,7 +139,7 @@ public final class ExamTemplates {
 
             new Template(new TemplateInfo("MILLIY_ENGLISH", "Milliy sertifikat: Ingliz tili", "LOCAL_CERT",
                     "CEFR formatida 4 ko'nikma: Listening, Reading, Writing, Speaking. Har ko'nikma 0-100%, umumiy o'rtacha -> B1/B2/C1.",
-                    ScoringMode.SECTION_AVERAGE, "Listening/Reading: to'g'ri javoblar foizi. Writing/Speaking: o'qituvchi 0-100 ball qo'yadi. Umumiy: 50-64 B1, 65-79 B2, 80+ C1.", 160,
+                    ScoringMode.SECTION_AVERAGE, NavigationMode.SEQUENTIAL, "Listening/Reading: to'g'ri javoblar foizi. Writing/Speaking: o'qituvchi 0-100 ball qo'yadi. Umumiy: 50-64 B1, 65-79 B2, 80+ C1.", 160,
                     List.of(
                             s("Listening", PartType.LISTENING, 35, "1", 35, "SINGLE_CHOICE, GAP_FILL, MATCHING", "35 savol, audio bir marta.", false),
                             s("Reading", PartType.READING, 60, "1", 35, "SINGLE_CHOICE, TRUE_FALSE_NG, GAP_FILL, MATCHING", "35 savol.", false),
@@ -143,7 +151,7 @@ public final class ExamTemplates {
 
             new Template(new TemplateInfo("MILLIY_SUBJECT", "Milliy sertifikat: fan (matematika, fizika...)", "LOCAL_CERT",
                     "Yopiq va ochiq savollar, 2 qism. Natija 0-100 ball, daraja: 50+ B1, 65+ B2, 80+ C1 (fanga qarab o'zgartiring).",
-                    ScoringMode.TOTAL, "Barcha savollar avtomatik tekshiriladi; ballarni umumiy 100 bo'lishiga moslab qo'ying.", 180,
+                    ScoringMode.TOTAL, NavigationMode.FREE, "Barcha savollar avtomatik tekshiriladi; ballarni umumiy 100 bo'lishiga moslab qo'ying.", 180,
                     List.of(
                             s("1-qism: yopiq testlar", PartType.GENERAL, 90, "2", 25, "SINGLE_CHOICE", "25 savol, 4 variant.", false),
                             s("2-qism: ochiq savollar", PartType.GENERAL, 90, "5", 10, "GAP_FILL", "10 savol, javob raqam yoki qisqa ibora.", false))),
@@ -151,7 +159,7 @@ public final class ExamTemplates {
 
             new Template(new TemplateInfo("DTM", "DTM (universitetga kirish testi)", "LOCAL_CERT",
                     "Majburiy fanlar: Ona tili (10), Matematika (10), O'zbekiston tarixi (10) - har biri 1.1 ball. 1-mutaxassislik fan (30) - 3.1 ball, 2-mutaxassislik (30) - 2.1 ball. Maks 189 ball, 3 soat.",
-                    ScoringMode.TOTAL, "Umumiy ball = to'g'ri javoblar x fan koeffitsienti. Shkalasiz, ball to'g'ridan-to'g'ri ko'rsatiladi.", 180,
+                    ScoringMode.TOTAL, NavigationMode.FREE, "Haqiqiy DTM kabi: barcha fanlar bir vaqtda ochiq, yagona 180 daqiqalik taymer, savollar orasida erkin yuriladi. Umumiy ball = to'g'ri javoblar x fan koeffitsienti (maks 189).", 180,
                     List.of(
                             s("Ona tili (majburiy)", PartType.GENERAL, 20, "1.1", 10, "SINGLE_CHOICE", "10 savol, 1.1 ball.", false),
                             s("Matematika (majburiy)", PartType.MATH, 25, "1.1", 10, "SINGLE_CHOICE", "10 savol, 1.1 ball.", false),
@@ -162,7 +170,7 @@ public final class ExamTemplates {
 
             new Template(new TemplateInfo("ATTESTATSIYA", "Attestatsiya (o'qituvchilar)", "LOCAL_CERT",
                     "Mutaxassislik fani (50 savol) va pedagogika/metodika (20 savol). Foiz bo'yicha toifa.",
-                    ScoringMode.TOTAL, "Ballar foizga aylantiriladi: 56-70% ikkinchi, 71-85% birinchi, 86%+ oliy toifa (mavjud tartibga moslang).", 120,
+                    ScoringMode.TOTAL, NavigationMode.FREE, "Ballar foizga aylantiriladi: 56-70% ikkinchi, 71-85% birinchi, 86%+ oliy toifa (mavjud tartibga moslang).", 120,
                     List.of(
                             s("Mutaxassislik fani", PartType.GENERAL, 90, "1", 50, "SINGLE_CHOICE", "50 savol.", false),
                             s("Pedagogika va metodika", PartType.GENERAL, 30, "1", 20, "SINGLE_CHOICE", "20 savol.", false))),
@@ -171,29 +179,29 @@ public final class ExamTemplates {
             // ---- bo'limli mashqlar (dars -> mavzu bo'yicha mock) ----
             new Template(new TemplateInfo("IELTS_LISTENING", "IELTS Listening mashqi (1 bo'lim)", "PRACTICE",
                     "Faqat Listening: 4 qism, 40 savol, rasmiy band jadvali. Darsga bog'lab, mavzu mashqi sifatida bering.",
-                    ScoringMode.SECTION_AVERAGE, "To'g'ri javoblar -> band (rasmiy jadval).", 40,
-                    List.of(s("Listening", PartType.LISTENING, 40, "1", 40, "GAP_FILL, SINGLE_CHOICE, MATCHING", "4 qism, 40 savol. Audio bir marta.", false))),
+                    ScoringMode.SECTION_AVERAGE, NavigationMode.SEQUENTIAL, "To'g'ri javoblar -> band (rasmiy jadval).", 40,
+                    List.of(s("Listening", PartType.LISTENING, 32, "1", 40, "GAP_FILL, SINGLE_CHOICE, MATCHING", "4 qism, 40 savol. Audio avtomatik, bir marta.", false))),
                     Map.of(0, IELTS_LISTENING), List.of(), Map.of()),
             new Template(new TemplateInfo("IELTS_READING", "IELTS Reading mashqi (1 bo'lim)", "PRACTICE",
-                    "Faqat Academic Reading: 3 matn, 40 savol, 60 daqiqa.", ScoringMode.SECTION_AVERAGE, "To'g'ri javoblar -> band.", 60,
+                    "Faqat Academic Reading: 3 matn, 40 savol, 60 daqiqa.", ScoringMode.SECTION_AVERAGE, NavigationMode.SEQUENTIAL, "To'g'ri javoblar -> band.", 60,
                     List.of(s("Reading", PartType.READING, 60, "1", 40, "TRUE_FALSE_NG, GAP_FILL, SINGLE_CHOICE, MATCHING", "3 matn, 40 savol.", false))),
                     Map.of(0, IELTS_READING_AC), List.of(), Map.of()),
             new Template(new TemplateInfo("IELTS_WRITING", "IELTS Writing mashqi (1 bo'lim)", "PRACTICE",
-                    "Faqat Writing: Task 1 + Task 2, 60 daqiqa. AI/o'qituvchi baholaydi.", ScoringMode.SECTION_AVERAGE, "Band 0-9, Task 2 vazni 2.", 60,
+                    "Faqat Writing: Task 1 + Task 2, 60 daqiqa. AI/o'qituvchi baholaydi.", ScoringMode.SECTION_AVERAGE, NavigationMode.SEQUENTIAL, "Band 0-9, Task 2 vazni 2.", 60,
                     List.of(s("Writing", PartType.WRITING, 60, "9", 2, "ESSAY", "Task 1 (150+ so'z) va Task 2 (250+ so'z).", true))),
                     Map.of(), List.of(), Map.of(0, IELTS_WRITING)),
             new Template(new TemplateInfo("IELTS_SPEAKING", "IELTS Speaking mashqi (1 bo'lim)", "PRACTICE",
-                    "Faqat Speaking: 3 qism, mikrofon orqali.", ScoringMode.SECTION_AVERAGE, "Band 0-9.", 15,
-                    List.of(s("Speaking", PartType.SPEAKING, 15, "9", 3, "SPEAKING", "3 qism.", true))),
+                    "Faqat Speaking: 3 qism, mikrofon orqali.", ScoringMode.SECTION_AVERAGE, NavigationMode.SEQUENTIAL, "Band 0-9.", 15,
+                    List.of(s("Speaking", PartType.SPEAKING, 15, "9", 9, "SPEAKING", "3 qism, 9 savol.", true))),
                     Map.of(), List.of(), Map.of(0, IELTS_SPEAKING)),
             new Template(new TemplateInfo("DTM_SUBJECT", "DTM fan mashqi (1 fan, 30 savol)", "PRACTICE",
                     "Bitta fan bo'yicha 30 ta DTM uslubidagi savol, 60 daqiqa. Darsga bog'lab mavzu mashqi sifatida bering.",
-                    ScoringMode.TOTAL, "To'g'ri javoblar soni x ball (standart 3.1).", 60,
+                    ScoringMode.TOTAL, NavigationMode.FREE, "To'g'ri javoblar soni x ball (standart 3.1).", 60,
                     List.of(s("Fan testi", PartType.GENERAL, 60, "3.1", 30, "SINGLE_CHOICE", "30 savol, 4 variant.", false))),
                     Map.of(), List.of(), Map.of()),
 
             new Template(new TemplateInfo("CUSTOM", "Bo'sh (o'zim tuzaman)", "OTHER",
-                    "Bo'limlarsiz boshlanadi; hamma narsani o'zingiz qo'shasiz.", ScoringMode.TOTAL, "Umumiy ball; xohlasangiz konversiya jadvali qo'shing.", 0, List.of()),
+                    "Bo'limlarsiz boshlanadi; hamma narsani o'zingiz qo'shasiz.", ScoringMode.TOTAL, NavigationMode.SEQUENTIAL, "Umumiy ball; xohlasangiz konversiya jadvali qo'shing.", 0, List.of()),
                     Map.of(), List.of(), Map.of())
     );
 

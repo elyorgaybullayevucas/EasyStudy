@@ -1,4 +1,4 @@
-N: IELTS Academic Mock Test 1. Listening. You will hear a number of different recordings and you will have to answer questions on what you hear. There will be time for you to read the instructions and questions, and you will have a chance to check your work. The recording will be played once only. Part 1. You will hear a conversation between a man and a receptionist at a sports centre. First you have some time to look at questions 1 to 10.
+N: IELTS Academic Mock Test 1. Listening. You will hear a number of different recordings and you will have to answer questions on what you hear. There will be time for you to read the instructions and questions, and you will have a chance to check your work. The recording will be played once only. The test is in four parts. Part 1. You will hear a conversation between a man and a receptionist at a sports centre. First you have some time to look at questions 1 to 10.
 P: ... ... ... ... ... ...
 N: Now listen carefully and answer questions 1 to 10.
 R: Good morning, Riverside Sports Centre. How can I help you?
@@ -44,4 +44,44 @@ Z: Once a month we also host local history talks. These used to be held in the m
 Z: Finally, practical matters. Printing is available on every floor. It costs ten pence per page for black and white, and you pay at the self service machine. Photocopying is the same price. Right, if you'd like to follow me, we'll start the tour on the ground floor.
 N: That is the end of Part 2. You now have half a minute to check your answers.
 P: ... ... ... ... ... ...
-N: That is the end of the listening test. You now have two minutes to transfer your answers.
+N: Part 3. You will hear two geography students, Emma and Jack, talking to their tutor about a project on coastal erosion. First you have some time to look at questions 21 to 26.
+P: ... ... ... ... ... ...
+N: Now listen carefully and answer questions 21 to 26.
+T: So, Emma, Jack, let's go through your field work. Remind me why you chose Sandford Bay.
+J: Well, it's actually quite far from the university, so distance wasn't the reason. We picked it mainly because the council has measured the position of the cliff edge every single year since 1990, so we had decades of data to compare our own readings with.
+T: Good. Nobody suggested it to you then?
+E: No, that was our own idea. But I have to say the first day didn't go well.
+T: Oh? Was it the weather?
+E: No, the weather was fine, and the equipment was all working. The problem was the survey markers. They're concrete posts, but the grass had grown right over them and we spent the whole morning just trying to find them.
+J: Once we had them, though, the measuring was straightforward. And the results are quite striking. People talk about the cliff losing a metre a year, but that's an exaggeration. On average it's roughly half a metre a year, about fifty centimetres, though some years it's only twenty.
+T: And why is it speeding up, do you think? Jack mentioned the old sea wall in his notes.
+E: I know the wall was taken away in 2015, and lots of residents blame that. And the walkers on the cliff path don't help either. But I'm convinced the real reason is the storms. They're more frequent now and much stronger, and every big storm takes a chunk out of the base of the cliff.
+T: That's a reasonable argument, but you'll need to support it. I don't think more measurements at Sandford will do that, and interviewing residents will only give you opinions. What I'd really like to see is a comparison with Hollow Cove, just along the coast, where the wall is still in place. If the cliff there is also retreating faster, the storms are the more likely cause.
+J: That makes sense. We could go there next weekend.
+T: Now, about the presentation itself. You've got far too many slides, but that's easily fixed, and the technical vocabulary is fine for this audience. My main suggestion is that you open with a map, so everyone can picture where you were before you start showing numbers.
+E: OK, we'll do that.
+N: Before you hear the rest of the conversation, you have some time to look at questions 27 to 30.
+P: ... ... ... ... ... ...
+N: Now listen and answer questions 27 to 30.
+T: Let's talk about your sources. How did you find the council report?
+J: Honestly, that was the best thing we had. Every measurement since 1990, all in one document, and it's free on the council website. We couldn't have done the project without it.
+T: And the newspaper archive?
+E: That was interesting for the history, but we had to be careful. A couple of the articles gave the wrong year for the removal of the wall, and one even had the bay in the wrong place. So we double checked everything against the report.
+T: What about the satellite images?
+J: The free ones weren't detailed enough to see the cliff edge, so we had to buy the high resolution images from a commercial company. That used up most of our project budget, actually.
+T: And the residents' photographs?
+E: Those took ages to collect. We put a notice in the village shop and knocked on doors for about three weeks before anyone trusted us with their family albums. But once we had them, they were lovely, you can see the cliff edge moving back over fifty years.
+T: Excellent. Right, let's look at your plan for Hollow Cove.
+N: That is the end of Part 3. You now have half a minute to check your answers.
+P: ... ... ... ... ... ...
+N: Part 4. You will hear part of a lecture about beekeeping in cities. First you have some time to look at questions 31 to 40.
+P: ... ... ... ... ... ...
+N: Now listen carefully and answer questions 31 to 40.
+L: Good afternoon. Today I want to look at one of the more surprising success stories in urban ecology, which is beekeeping in cities. Let me start with some background. Honeybees matter to all of us because they pollinate about a third of the crops we eat, from apples to almonds. Yet in the countryside, where you would expect them to thrive, colonies have been declining for decades. The two main causes are well known: the heavy use of pesticides on farmland, and the loss of habitat, as hedges and wild meadows have been replaced by large single crop fields.
+L: Now, why would a city suit bees better than a field? The first reason is variety. A modern farm may offer one kind of flower for two weeks and then nothing. A city, on the other hand, has a huge range of flowering plants in its parks and gardens, blooming from early spring to late autumn. The second reason is temperature. Because of all the buildings and roads, a city is typically about two degrees warmer than the surrounding countryside, so the foraging season is longer. And thirdly, far fewer agricultural chemicals are used in cities, so the bees are simply healthier.
+L: Let me give you a case study. Paris is probably the most famous beekeeping city in Europe. Hives have been kept on the roof of the opera house since 1985, and there are now hundreds more on offices, schools and even the roofs of department stores. Beekeepers there report that honey production per hive can be twice as high as in rural areas, and the honey itself has a more complex flavour because of the variety of flowers.
+L: It isn't all good news, of course. When beekeeping becomes fashionable, you get too many hives in one area, and they compete for the same flowers. Crowded hives also make it much easier for disease to spread from one colony to the next. And there's a more subtle issue. Honeybees are only one species. Cities are also home to many kinds of wild bees, and a large number of honeybee hives can push these out. So the advice from ecologists is that wherever hives are introduced, wildflowers should be planted as well, so that there is enough food for all species.
+L: Finally, a word for anyone who's thinking of starting. Don't rush out and buy a hive. Join a local association first, where experienced keepers will teach you how to handle the bees safely and how to recognise problems early. Most cities now have one, and many offer courses for beginners. Right, let's move on to how a colony is organised.
+N: That is the end of Part 4. You now have half a minute to check your answers.
+P: ... ... ... ... ... ...
+N: That is the end of the listening test. You now have two minutes to check your answers.
