@@ -2,7 +2,7 @@
 FROM mirror.gcr.io/library/node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-maxtimeout=120000
 
 FROM mirror.gcr.io/library/node:22-alpine AS build
 WORKDIR /app

@@ -1,0 +1,50 @@
+# Caddy: avtomatik HTTPS (Let's Encrypt), HTTP -> HTTPS, /api/* -> backend, qolgani -> Next.js
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+
+	# Backend API (media oqimi ham shu yerdan: /api/media/..., 2 GB gacha yuklash)
+	handle /api/* {
+		request_body {
+			max_size 2GB
+		}
+		reverse_proxy backend:8080 {
+			transport http {
+				read_timeout 30m
+				write_timeout 30m
+			}
+			flush_interval -1
+		}
+	}
+	handle /actuator/health {
+		reverse_proxy backend:8080
+	}
+
+	# Frontend
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}
+
+# www -> asosiy domen
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

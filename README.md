@@ -79,6 +79,10 @@ python scripts/attach_media.py --email admin@easystudy.uz --password '...' --exa
 
 Lokal rejimda fayllar `media` Docker volume'ida (`/data/media`). Limitlar: video 2 GB, audio 200 MB, rasm 10 MB (`APP_MEDIA_MAX_*_MB`). Havola muddati 4 soat (`APP_MEDIA_URL_TTL_MINUTES`). Prod'da Caddy/Nginx'da `client_max_body_size` ni ham 2 GB qiling.
 
+## Online serverga joylash
+
+`deploy/DEPLOY.md` — Hetzner CX22 (≈ €4.5/oy) + Ubuntu 24.04 + Docker Compose + Caddy (avtomatik HTTPS). Bitta buyruq: `bash deploy/server-setup.sh <domen> <email>` (firewall, swap, Docker, `.env` sirlari, build, kunlik zaxira). Yangilash: `bash deploy/update.sh`. Production compose: `docker-compose.prod.yml`, namunaviy sozlamalar: `.env.prod.example`.
+
 ## Xavfsizlik qarorlari
 
 - Access JWT 15 daqiqa (xotirada, localStorage emas), refresh token 7 kun HttpOnly+SameSite=Strict cookie, DB da hash, rotation va reuse-detection.

@@ -1,0 +1,104 @@
+# Production: bitta VPS, Docker Compose, Caddy (avtomatik HTTPS, Let's Encrypt).
+# Ishga tushirish: cp .env.prod.example .env && nano .env && docker compose -f docker-compose.prod.yml up -d --build
+# Tashqariga faqat 80/443 ochiladi; DB va backend faqat ichki tarmoqda.
+name: easystudy
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: easystudy
+      POSTGRES_USER: easystudy
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env da berilishi shart}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U easystudy"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: &log
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/easystudy
+      SPRING_DATASOURCE_USERNAME: easystudy
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      APP_JWT_SECRET: ${JWT_SECRET:?JWT_SECRET .env da berilishi shart}
+      # Frontend va API bitta domenda (Caddy /api/* ni backendga yo'naltiradi) -> cookie SameSite=Strict ishlaydi
+      APP_CORS_ORIGINS: https://${DOMAIN:?DOMAIN .env da berilishi shart}
+      APP_COOKIE_SECURE: "true"
+      APP_PUBLIC_URL: https://${DOMAIN}
+      APP_DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-}
+      APP_DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-}
+      APP_MEDIA_PROVIDER: ${MEDIA_PROVIDER:-local}
+      APP_MEDIA_DIR: /data/media
+      APP_S3_ENDPOINT: ${S3_ENDPOINT:-}
+      APP_S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-}
+      APP_S3_BUCKET: ${S3_BUCKET:-easystudy-media}
+      APP_S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      APP_S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      APP_S3_REGION: ${S3_REGION:-us-east-1}
+      APP_AI_PROVIDER: ${AI_PROVIDER:-none}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      APP_AI_MODEL: ${AI_MODEL:-claude-opus-5-5}
+      APP_TRANSCRIPTION_PROVIDER: ${TRANSCRIPTION_PROVIDER:-none}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      JAVA_TOOL_OPTIONS: -Xss512k
+    volumes:
+      - media:/data/media
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    logging: *log
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_URL: https://${DOMAIN}
+      API_URL_INTERNAL: http://backend:8080   # server-side render'lar ichki tarmoqdan
+      HOSTNAME: 0.0.0.0
+    logging: *log
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@${DOMAIN}}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging: *log
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:
