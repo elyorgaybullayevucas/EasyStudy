@@ -9,6 +9,7 @@ DOMAIN="${1:?Foydalanish: bash setup.sh <domen> <email>}"
 EMAIL="${2:?Foydalanish: bash setup.sh <domen> <email>}"
 REPO="https://github.com/elyorgaybullayevucas/EasyStudy.git"
 APP_DIR="/opt/easystudy"
+if [ "$(id -u)" != "0" ]; then echo "root sifatida ishga tushiring: sudo bash setup.sh ..."; exit 1; fi
 
 echo "==> 1/7 Tizim yangilanishi"
 export DEBIAN_FRONTEND=noninteractive
@@ -54,7 +55,6 @@ fi
 cd "$APP_DIR"
 
 echo "==> 6/7 .env (maxfiy kalitlar avtomatik)"
-if [ "$(id -u)" != "0" ]; then echo "root sifatida ishga tushiring: sudo bash setup.sh ..."; exit 1; fi
 if [ ! -f .env ]; then
   cp .env.prod.example .env
   sed -i "s|^DOMAIN=.*|DOMAIN=$DOMAIN|; s|^ACME_EMAIL=.*|ACME_EMAIL=$EMAIL|" .env
