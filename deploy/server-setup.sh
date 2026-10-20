@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# EasyStudy: yangi Ubuntu 22.04/24.04 VPS ni noldan sozlash va ishga tushirish.
+# EasyStudy: yangi Ubuntu 22.04/24.04 VPS ni noldan sozlash va ishga tushirish (x86 va ARM/Oracle Ampere).
 # Ishlatish (root sifatida):
 #   curl -fsSL https://raw.githubusercontent.com/elyorgaybullayevucas/EasyStudy/main/deploy/server-setup.sh -o setup.sh
 #   bash setup.sh easystudy.uz admin@easystudy.uz
@@ -23,6 +23,13 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw allow 443/udp
 ufw --force enable
+# Oracle Cloud Ubuntu obrazlari: oldindan iptables REJECT qoidalari 80/443 ni yopadi -> ochamiz va saqlaymiz
+if [ -f /etc/iptables/rules.v4 ] && grep -q "REJECT" /etc/iptables/rules.v4; then
+  for p in 80 443; do iptables -C INPUT -p tcp --dport $p -j ACCEPT 2>/dev/null || iptables -I INPUT 5 -m state --state NEW -p tcp --dport $p -j ACCEPT; done
+  iptables -C INPUT -p udp --dport 443 -j ACCEPT 2>/dev/null || iptables -I INPUT 5 -m state --state NEW -p udp --dport 443 -j ACCEPT
+  apt-get install -yq iptables-persistent >/dev/null && netfilter-persistent save >/dev/null
+  echo "    Oracle: VCN Security List'da ham 80/443 (TCP) ingress qoidasi qo'shilgan bo'lishi shart"
+fi
 systemctl enable --now fail2ban
 dpkg-reconfigure -f noninteractive unattended-upgrades
 
@@ -47,6 +54,7 @@ fi
 cd "$APP_DIR"
 
 echo "==> 6/7 .env (maxfiy kalitlar avtomatik)"
+if [ "$(id -u)" != "0" ]; then echo "root sifatida ishga tushiring: sudo bash setup.sh ..."; exit 1; fi
 if [ ! -f .env ]; then
   cp .env.prod.example .env
   sed -i "s|^DOMAIN=.*|DOMAIN=$DOMAIN|; s|^ACME_EMAIL=.*|ACME_EMAIL=$EMAIL|" .env

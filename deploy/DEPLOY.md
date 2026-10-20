@@ -15,6 +15,29 @@ Tavsiya: **Hetzner CX22, Ubuntu 24.04, Falkenstein yoki Helsinki**. Video hajmi 
 
 Hetznerda: Cloud Console → New project → Add server → Location (Falkenstein) → Image Ubuntu 24.04 → Type Shared CX22 → SSH key qo'shing (parol bilan kirmang) → Create. IPv4 ni ro'yxatdan o'tkazing.
 
+## 1a. Tekin variantlar (test davri uchun)
+
+**Oracle Cloud Always Free (tavsiya).** ARM Ampere A1: 4 OCPU, 24 GB RAM, 200 GB disk, 10 TB trafik — muddatsiz bepul. Qadamlar:
+
+1. cloud.oracle.com → Sign up (karta tekshiruv uchun, pul yechilmaydi). Home region: Frankfurt / Amsterdam.
+2. Compute → Instances → Create: Image **Ubuntu 24.04 (aarch64)**, Shape **VM.Standard.A1.Flex** → 4 OCPU, 24 GB ("Always Free" belgisi). "Out of capacity" chiqsa 2 OCPU/12 GB qiling yoki keyinroq urinib ko'ring. SSH public key qo'shing (`deploy` kaliti).
+3. Networking → VCN → Subnet → **Security List** → Ingress Rules: `0.0.0.0/0` TCP 80, TCP 443, UDP 443 qo'shing (bu bo'lmasa sayt ochilmaydi).
+4. `ssh ubuntu@IP`, so'ng `sudo -i` va 3-bo'limdagi buyruq. Skript Oracle'ning ichki iptables qoidalarini o'zi ochadi.
+5. Domen bo'lmasa vaqtincha bepul DNS: DuckDNS (`easystudy.duckdns.org`) yoki Cloudflare'da arzon domen — Caddy sertifikatni oladi.
+
+Eslatma: 3 oy ishlatilmagan Always Free server o'chirilishi mumkin; kunlik zaxira (`backup.sh`) shuning uchun ham muhim.
+
+**Cloudflare Tunnel (serversiz, kompyuteringizdan).** Lokal ishlab turgan platformaga internetdan HTTPS havola:
+
+```bash
+# Windows: winget install Cloudflare.cloudflared
+cloudflared tunnel --url http://localhost:3000
+```
+
+Chiqadigan `https://....trycloudflare.com` havolasini ulashasiz. `frontend` ni `NEXT_PUBLIC_API_URL` shu havolaga qaratib qayta ishga tushirish kerak bo'ladi (yoki Caddy bilan prod compose'ni lokalda ko'tarib, 80-portni tunnelga berasiz). Cheklov: bitta yuklash 100 MB, kompyuter yoniq turishi shart. Faqat qisqa demo uchun.
+
+**Vaqtinchalik kreditlar:** Google Cloud $300 (90 kun), DigitalOcean $200 (60 kun), Azure $200 (30 kun), GitHub Student Pack (talabalar). Muddat tugagach pullik — test uchun Oracle qulayroq.
+
 ## 2. Domen
 
 DNS'da ikki A yozuv: `easystudy.uz → SERVER_IP` va `www → SERVER_IP` (TTL 300). Domen tarqalguncha (5–30 daqiqa) skriptni ishga tushirmang — Caddy sertifikatni DNS orqali oladi.
