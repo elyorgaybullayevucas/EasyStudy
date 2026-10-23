@@ -1,5 +1,6 @@
 "use client";
 
+import { MathInline, MathText } from "@/components/ui/MathText";
 import { cn, wordCount } from "@/lib/format";
 import type { AnswerResponse, QuestionView } from "@/lib/types";
 
@@ -33,14 +34,14 @@ export function QuestionCard({ q, value, onChange, disabled, attemptId, number, 
 
   return (
     <div className={cn("card p-6", flagged && "ring-2 ring-amber-300")} id={`q-${q.id}`}>
-      {q.passage && !hidePassage && <div className="mb-4 whitespace-pre-wrap rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">{q.passage}</div>}
+      {q.passage && !hidePassage && (q.passage.includes("$") ? <MathText text={q.passage} className="mb-4 rounded-xl bg-slate-50 p-4 text-sm" /> : <div className="mb-4 whitespace-pre-wrap rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">{q.passage}</div>)}
       {q.imageUrl && !hidePrompt && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={q.imageUrl} alt="" className="mb-4 max-h-96 w-full rounded-xl object-contain" onContextMenu={(e) => e.preventDefault()} />
       )}
       <div className="mb-4 flex items-start gap-3">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">{number ?? q.orderIndex}</span>
-        {!hidePrompt && <p className="flex-1 whitespace-pre-line font-medium">{q.prompt}</p>}
+        {!hidePrompt && <p className="flex-1 whitespace-pre-line font-medium"><MathInline text={q.prompt} /></p>}
         {hidePrompt && <p className="flex-1 text-sm text-slate-500">Javobingizni o&apos;ng tomondagi maydonga yozing.</p>}
         {onFlag && (
           <label className={cn("flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-xs", flagged ? "border-amber-400 bg-amber-50 text-amber-800" : "border-slate-200 text-slate-500 hover:bg-slate-50")} title="Keyinroq qaytib ko'rish uchun belgilash">
@@ -54,7 +55,7 @@ export function QuestionCard({ q, value, onChange, disabled, attemptId, number, 
           {opts.map((o) => (
             <label key={o.key} className={optionClass(value?.value === o.key)}>
               <input type="radio" name={`q${q.id}`} className="accent-brand-600" disabled={disabled} checked={value?.value === o.key} onChange={() => onChange({ value: o.key })} />
-              <span><b>{o.key}.</b> {o.text}</span>
+              <span><b>{o.key}.</b> <MathInline text={o.text} /></span>
             </label>
           ))}
         </div>
@@ -68,7 +69,7 @@ export function QuestionCard({ q, value, onChange, disabled, attemptId, number, 
               <label key={o.key} className={optionClass(set.has(o.key))}>
                 <input type="checkbox" className="accent-brand-600" disabled={disabled} checked={set.has(o.key)}
                   onChange={(e) => { if (e.target.checked) set.add(o.key); else set.delete(o.key); onChange({ values: [...set] }); }} />
-                <span><b>{o.key}.</b> {o.text}</span>
+                <span><b>{o.key}.</b> <MathInline text={o.text} /></span>
               </label>
             );
           })}

@@ -60,7 +60,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/exams/**", "/api/courses/**", "/api/categories/**",
+                .requestMatchers("/api/subjects/my-placements").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/exams/**", "/api/courses/**", "/api/categories/**", "/api/subjects/**",
                         "/api/certificates/**", "/api/posts/**", "/api/teachers/**", "/api/media/**").permitAll()
                 // Rol tekshiruvi kontrollerlardagi @PreAuthorize orqali: token yo'q -> 401, rol yetmasa -> 403
                 .requestMatchers("/api/admin/**").authenticated()

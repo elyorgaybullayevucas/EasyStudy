@@ -15,6 +15,7 @@ import uz.easystudy.security.AuthPrincipal;
 import uz.easystudy.service.AdminService;
 import uz.easystudy.service.CategoryService;
 import uz.easystudy.service.CourseService;
+import uz.easystudy.service.SubjectService;
 
 import java.util.List;
 
@@ -27,6 +28,53 @@ public class AdminController {
     private final AdminService admin;
     private final CourseService courses;
     private final CategoryService categories;
+    private final SubjectService subjects;
+
+    // ---------- fanlar (onlayn maktab) ----------
+
+    /** O'qituvchi: biriktirilgan fanlar; admin: barcha yo'nalishlar. */
+    @GetMapping("/subjects")
+    public List<CategoryDto> mySubjects(@AuthenticationPrincipal AuthPrincipal me) {
+        return categories.mySubjects(me.id(), me.role());
+    }
+
+    @GetMapping("/subjects/{slug}/overview")
+    public SubjectOverview subjectOverview(@PathVariable String slug, @AuthenticationPrincipal AuthPrincipal me) {
+        return subjects.overview(slug, me);
+    }
+
+    @GetMapping("/teachers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<UserResponse> teachers() {
+        return admin.teachers();
+    }
+
+    public record TeachersInput(List<Long> userIds) {}
+
+    @PutMapping("/categories/{id}/teachers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CategoryDto setTeachers(@PathVariable Long id, @RequestBody TeachersInput r) {
+        return categories.setTeachers(id, r.userIds());
+    }
+
+    // ---------- bo'limlar (modullar) ----------
+
+    @PostMapping("/courses/{courseId}/modules")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ModuleBrief addModule(@PathVariable Long courseId, @Valid @RequestBody ModuleInput r, @AuthenticationPrincipal AuthPrincipal me) {
+        return courses.addModule(courseId, r, me);
+    }
+
+    @PutMapping("/modules/{id}")
+    public ModuleBrief updateModule(@PathVariable Long id, @Valid @RequestBody ModuleInput r, @AuthenticationPrincipal AuthPrincipal me) {
+        return courses.updateModule(id, r, me);
+    }
+
+    @DeleteMapping("/modules/{id}")
+    public ResponseEntity<Void> deleteModule(@PathVariable Long id, @AuthenticationPrincipal AuthPrincipal me) {
+        courses.deleteModule(id, me);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/stats")
     public AdminStats stats() {

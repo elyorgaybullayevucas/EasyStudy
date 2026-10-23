@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
     Optional<Course> findBySlug(String slug);
     boolean existsBySlug(String slug);
+    List<Course> findByCategoryIdAndStageIsNotNullOrderByStageAsc(Long categoryId);
+    List<Course> findByCategoryIdOrderByStageAscCreatedAtDesc(Long categoryId);
     long countByPublishedTrue();
 
     /** [courseId, lessonCount, totalMinutes] */

@@ -37,6 +37,78 @@ export interface Category {
   position: number;
   courseCount: number;
   examCount: number;
+  /** Daraja aniqlash (joylashtirish) testi */
+  placementExam: ExamBrief | null;
+  /** Shu fan tayyorlaydigan sertifikat kategoriyalari sluglari */
+  certSlugs: string[];
+  /** Fanga mas'ul o'qituvchilar */
+  teachers: InstructorBrief[];
+}
+
+/** Talabaning fan bo'yicha joylashuvi (daraja testi natijasi) */
+export interface PlacementDto {
+  categorySlug: string;
+  categoryName: string;
+  scorePercent: number;
+  stage: number;
+  courseSlug: string | null;
+  courseTitle: string | null;
+  createdAt: string;
+}
+
+/** Onlayn maktab fani: bosqichlar va daraja testi */
+export interface Subject {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  courseCount: number;
+  examCount: number;
+  placementExam: ExamBrief | null;
+  stages: CourseListItem[];
+  certifications: CategoryBrief[];
+  myPlacement: PlacementDto | null;
+  completedCourseIds: number[];
+  enrolledCourseIds: number[];
+}
+
+export interface ModuleBrief {
+  id: number;
+  title: string;
+  description: string;
+  position: number;
+  exam: ExamBrief | null;
+  lessonIds: number[];
+}
+
+export interface ModuleProgress {
+  moduleId: number;
+  completedLessons: number;
+  totalLessons: number;
+  examBestRaw: number | null;
+  examBestScaled: number | null;
+  examBestLabel: string | null;
+  examAttempts: number;
+}
+
+export interface SubjectAttemptRow {
+  attemptId: number;
+  studentName: string;
+  examTitle: string;
+  submittedAt: string | null;
+  rawScore: number | null;
+  scaledScore: number | null;
+  status: AttemptStatus;
+}
+
+export interface SubjectOverview {
+  subject: Category;
+  courses: CourseListItem[];
+  exams: ExamSummary[];
+  students: number;
+  placements: number;
+  recentAttempts: SubjectAttemptRow[];
 }
 
 export interface CategoryBrief {
@@ -67,6 +139,7 @@ export interface LessonBrief {
   preview: boolean;
   /** Darsga bog'langan mavzu mock'i (bo'lim mashqi) */
   exam: ExamBrief | null;
+  moduleId: number | null;
 }
 
 export interface Lesson extends LessonBrief {
@@ -101,6 +174,12 @@ export interface CourseListItem {
   lessonCount: number;
   totalMinutes: number;
   studentCount: number;
+  /** Fan ichidagi bosqich raqami (null = oddiy kurs) */
+  stage: number | null;
+  /** Daraja testidan shu foizdan boshlab tavsiya etiladi */
+  minPlacementScore: number;
+  /** Darslar ketma-ket ochiladi */
+  sequential: boolean;
 }
 
 export interface CourseDetail extends CourseListItem {
@@ -111,6 +190,7 @@ export interface CourseDetail extends CourseListItem {
   quizzes: QuizBrief[];
   enrolled: boolean;
   finalExam: ExamBrief | null;
+  modules: ModuleBrief[];
 }
 
 export interface CourseAdminDetail extends Omit<CourseDetail, "lessons" | "enrolled"> {
@@ -135,6 +215,11 @@ export interface CourseProgress {
   completed: boolean;
   certificateCode: string | null;
   nextLessonId: number | null;
+  /** Ketma-ket rejimda ochiq darslar (oddiy kursda hammasi) */
+  unlockedLessonIds: number[];
+  modules: ModuleProgress[];
+  /** Kurs tugagach keyingi bosqich */
+  nextStage: CourseListItem | null;
 }
 
 export interface MyCourse {
@@ -146,6 +231,7 @@ export interface MyCourse {
   totalLessons: number;
   nextLessonId: number | null;
   certificateCode: string | null;
+  nextLessonTitle: string | null;
 }
 
 export interface DashboardStats {
@@ -360,6 +446,8 @@ export interface AttemptResult {
   aiStatus: AiStatus;
   sections: SectionResult[];
   answers: AnswerResult[];
+  /** Daraja testi bo'lsa: joylashtirilgan bosqich */
+  placement: PlacementDto | null;
 }
 
 export interface QuestionAdminView extends QuestionView {

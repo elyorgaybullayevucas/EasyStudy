@@ -31,6 +31,8 @@ export default async function CoursePage({ params }: Props) {
             <div className="flex flex-wrap gap-2">
               {course.category && <span className="badge bg-brand-500/20 text-brand-200">{course.category.name}</span>}
               <span className="badge bg-white/10 text-slate-200">{levelLabels[course.level]}</span>
+              {course.stage != null && <span className="badge bg-accent-500/20 text-accent-300">{course.stage}-bosqich</span>}
+              {course.sequential && <span className="badge bg-white/10 text-slate-200">darslar ketma-ket ochiladi</span>}
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">{course.title}</h1>
             <p className="mt-4 text-lg text-slate-300">{course.shortDescription}</p>
@@ -57,9 +59,39 @@ export default async function CoursePage({ params }: Props) {
           </section>
           <section>
             <h2 className="text-xl font-bold">Kurs dasturi</h2>
-            <p className="mt-1 text-sm text-slate-500">{course.lessonCount} ta dars • {formatDuration(course.totalMinutes)}</p>
+            <p className="mt-1 text-sm text-slate-500">{course.modules.length > 0 ? `${course.modules.length} bo'lim • ` : ""}{course.lessonCount} ta dars • {course.quizzes.filter((q) => q.lessonId != null).length} mavzu testi • {formatDuration(course.totalMinutes)}</p>
+            {course.stage != null && course.category && (
+              <p className="mt-2 text-sm text-slate-600">Bu {course.category.name} fanining {course.stage}-bosqichi. {course.minPlacementScore > 0 ? `Daraja testidan ${course.minPlacementScore}%+ olganlar yoki oldingi bosqichni tugatganlar uchun.` : "Boshlang'ich bosqich: hamma uchun ochiq."} <Link href={`/maktab/${course.category.slug}`} className="text-brand-700 underline">Fan sahifasi</Link></p>
+            )}
             <ol className="card mt-4 divide-y divide-slate-100">
-              {course.lessons.map((lesson, i) => (
+              {course.modules.map((m) => (
+                <li key={`mod-${m.id}`}>
+                  <p className="bg-slate-50 px-5 py-2 text-xs font-semibold tracking-wider text-slate-600 uppercase">{m.position}-bo&apos;lim: {m.title}</p>
+                  <ol className="divide-y divide-slate-100">
+                    {course.lessons.filter((l) => l.moduleId === m.id).map((lesson) => (
+                      <li key={lesson.id} className="flex items-center gap-4 px-5 py-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">{course.lessons.findIndex((l) => l.id === lesson.id) + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium">{lesson.title}</p>
+                          <p className="text-xs text-slate-500">
+                            {lesson.preview && <span className="font-medium text-accent-600">Bepul ko&apos;rish mumkin · </span>}
+                            {course.quizzes.some((q) => q.lessonId === lesson.id) && <span>mavzu testi</span>}
+                            {lesson.exam && <span> · mavzu mock&apos;i: {lesson.exam.title}</span>}
+                          </p>
+                        </div>
+                        <span className="flex shrink-0 items-center gap-1 text-sm text-slate-500"><PlayIcon width={14} height={14} /> {lesson.durationMinutes} daq</span>
+                      </li>
+                    ))}
+                    {m.exam && (
+                      <li className="flex items-center gap-4 bg-violet-50/60 px-5 py-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700"><QuizIcon width={16} height={16} /></span>
+                        <div className="flex-1"><p className="font-medium">Bo&apos;lim mock&apos;i: {m.exam.title}</p><p className="text-xs text-slate-500">{m.exam.questionCount} savol • {m.exam.totalMinutes} daqiqa</p></div>
+                      </li>
+                    )}
+                  </ol>
+                </li>
+              ))}
+              {course.lessons.filter((l) => !l.moduleId || !course.modules.some((m) => m.id === l.moduleId)).map((lesson, i) => (
                 <li key={lesson.id} className="flex items-center gap-4 px-5 py-4">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">{i + 1}</span>
                   <div className="min-w-0 flex-1">
@@ -73,7 +105,7 @@ export default async function CoursePage({ params }: Props) {
                   <span className="flex shrink-0 items-center gap-1 text-sm text-slate-500"><PlayIcon width={14} height={14} /> {lesson.durationMinutes} daq</span>
                 </li>
               ))}
-              {course.quizzes.map((quiz) => (
+              {course.quizzes.filter((q) => q.lessonId == null).map((quiz) => (
                 <li key={`q-${quiz.id}`} className="flex items-center gap-4 px-5 py-4">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700"><QuizIcon width={16} height={16} /></span>
                   <div className="flex-1">

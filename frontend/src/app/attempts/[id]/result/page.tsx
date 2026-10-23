@@ -138,6 +138,17 @@ export default function ResultPage() {
       <p className="text-sm text-slate-500">Mock imtihon natijasi · {statusLabels[res.status]}</p>
       <h1 className="mt-1 text-3xl font-bold tracking-tight">{res.examTitle}</h1>
 
+      {res.placement && (
+        <div className="mt-6 rounded-2xl border border-brand-300 bg-brand-50 p-6">
+          <p className="text-xs font-semibold tracking-wider text-brand-700 uppercase">Darajangiz aniqlandi · {res.placement.categoryName}</p>
+          <p className="mt-1 text-2xl font-bold">{res.placement.scorePercent}% → {res.placement.stage}-bosqichdan boshlang</p>
+          {res.placement.courseTitle && <p className="mt-1 text-sm text-slate-700">{res.placement.courseTitle}</p>}
+          <div className="mt-4 flex flex-wrap gap-3">
+            {res.placement.courseSlug && <Link href={`/courses/${res.placement.courseSlug}`} className="btn-primary">Bosqichni boshlash</Link>}
+            <Link href={`/maktab/${res.placement.categorySlug}`} className="btn-secondary">Fan sahifasi</Link>
+          </div>
+        </div>
+      )}
       {res.pendingCount > 0 && res.aiStatus === "PENDING" && (
         <Alert type="info" className="mt-6">Writing/Speaking javoblaringiz AI tomonidan baholanmoqda (odatda 1 daqiqagacha). Natija avtomatik yangilanadi.</Alert>
       )}

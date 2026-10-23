@@ -16,12 +16,23 @@ public final class LearningDtos {
 
     public record QuizProgress(Long quizId, String title, Integer bestScore, long attempts, boolean passed) {}
 
+    /** Bo'lim mock'i bo'yicha eng yaxshi natija. */
+    public record ModuleProgress(Long moduleId, int completedLessons, int totalLessons, java.math.BigDecimal examBestRaw,
+                                 java.math.BigDecimal examBestScaled, String examBestLabel, long examAttempts) {}
+
     public record CourseProgress(Long courseId, boolean enrolled, List<Long> completedLessonIds, int totalLessons,
                                  List<QuizProgress> quizzes, int progressPercent, boolean completed,
-                                 String certificateCode, Long nextLessonId) {}
+                                 String certificateCode, Long nextLessonId, List<Long> unlockedLessonIds,
+                                 List<ModuleProgress> modules, CourseListItem nextStage) {}
 
     public record MyCourse(CourseListItem course, Instant enrolledAt, Instant completedAt, int progressPercent,
-                           int completedLessons, int totalLessons, Long nextLessonId, String certificateCode) {}
+                           int completedLessons, int totalLessons, Long nextLessonId, String certificateCode, String nextLessonTitle) {}
+
+    /** O'qituvchi nazorati: fan bo'yicha umumiy ko'rinish. */
+    public record SubjectAttemptRow(Long attemptId, String studentName, String examTitle, Instant submittedAt,
+                                    java.math.BigDecimal rawScore, java.math.BigDecimal scaledScore, String status) {}
+    public record SubjectOverview(CourseDtos.CategoryDto subject, List<CourseListItem> courses, List<uz.easystudy.dto.ExamDtos.ExamSummary> exams,
+                                  long students, long placements, List<SubjectAttemptRow> recentAttempts) {}
 
     public record DashboardStats(long enrolledCourses, long completedCourses, long inProgressCourses,
                                  long certificates, long completedLessons, long quizzesPassed,

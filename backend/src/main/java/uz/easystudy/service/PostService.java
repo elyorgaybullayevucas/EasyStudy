@@ -86,7 +86,7 @@ public class PostService {
     public TeacherProfile teacher(Long id) {
         User u = users.findById(id).orElseThrow(() -> AppException.notFound("O'qituvchi topilmadi"));
         if (u.getRole() == Role.STUDENT) throw AppException.notFound("O'qituvchi topilmadi");
-        var page = courseService.list(null, null, null, null, true, u.getId(), 1, 50);
+        var page = courseService.list(null, null, null, null, true, u.getId(), null, 1, 50);
         long students = page.items().stream().mapToLong(c -> c.studentCount()).sum();
         List<PostListItem> myPosts = posts.findByAuthorIdAndPublishedTrueOrderByCreatedAtDesc(u.getId()).stream().map(this::toItem).toList();
         return new TeacherProfile(u.getId(), u.getFullName(), u.getHeadline(), u.getBio(), u.getAvatarUrl(), u.getCreatedAt(),

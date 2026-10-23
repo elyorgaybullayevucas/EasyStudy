@@ -24,6 +24,7 @@ public class CourseService {
     private final CourseRepository courses;
     private final LessonRepository lessons;
     private final QuizRepository quizzes;
+    private final CourseModuleRepository modules;
     private final EnrollmentRepository enrollments;
     private final UserRepository users;
     private final ExamRepository exams;
@@ -53,7 +54,8 @@ public class CourseService {
     public CourseListItem toListItem(Course c, long[] s) {
         return new CourseListItem(c.getId(), c.getTitle(), c.getSlug(), c.getShortDescription(), c.getThumbnailUrl(),
                 c.getLevel(), c.getPrice(), c.isFeatured(), c.isPublished(),
-                CategoryService.brief(c.getCategory()), instructor(c.getInstructor()), s[0], s[1], s[2]);
+                CategoryService.brief(c.getCategory()), instructor(c.getInstructor()), s[0], s[1], s[2],
+                c.getStage(), c.getMinPlacementScore(), c.isSequential());
     }
 
     public List<CourseListItem> toListItems(List<Course> list) {
@@ -75,7 +77,13 @@ public class CourseService {
     }
 
     public static LessonBrief lessonBrief(Lesson l) {
-        return new LessonBrief(l.getId(), l.getTitle(), l.getDurationMinutes(), l.getPosition(), l.isPreview(), examBrief(l.getExam()));
+        return new LessonBrief(l.getId(), l.getTitle(), l.getDurationMinutes(), l.getPosition(), l.isPreview(), examBrief(l.getExam()),
+                l.getModule() == null ? null : l.getModule().getId());
+    }
+
+    public static List<ModuleBrief> moduleBriefs(Course c) {
+        return c.getModules().stream().map(m -> new ModuleBrief(m.getId(), m.getTitle(), m.getDescription(), m.getPosition(), examBrief(m.getExam()),
+                c.getLessons().stream().filter(l -> l.getModule() != null && l.getModule().getId().equals(m.getId())).map(Lesson::getId).toList())).toList();
     }
 
     /** Platformadagi video bo'lsa vaqtli imzolangan havola; aks holda tashqi havola. */
@@ -93,13 +101,17 @@ public class CourseService {
             source = null;
         }
         return new LessonOut(l.getId(), l.getCourse().getId(), l.getTitle(), l.getContent(), url, source, l.getVideoKey(),
-                l.getDurationMinutes(), l.getPosition(), l.isPreview(), examBrief(l.getExam()));
+                l.getDurationMinutes(), l.getPosition(), l.isPreview(), examBrief(l.getExam()),
+                l.getModule() == null ? null : l.getModule().getId());
     }
 
+    /** Admin, kurs muallifi yoki fanga mas'ul o'qituvchi. */
     public boolean canManage(AuthPrincipal me, Course c) {
         if (me == null) return false;
         if (me.role() == Role.ADMIN) return true;
-        return me.role() == Role.TEACHER && c.getInstructor() != null && c.getInstructor().getId().equals(me.id());
+        if (me.role() != Role.TEACHER) return false;
+        if (c.getInstructor() != null && c.getInstructor().getId().equals(me.id())) return true;
+        return c.getCategory() != null && categoryService.isTeacherOf(me.id(), c.getCategory().getId());
     }
 
     /** Nashr etilgan, yoki boshqaruvchi uchun har qanday kurs. */
@@ -112,11 +124,14 @@ public class CourseService {
 
     @Transactional(readOnly = true)
     public PageDto<CourseListItem> list(String search, String categorySlug, CourseLevel level, Boolean featured,
-                                        boolean publishedOnly, Long instructorId, int page, int size) {
+                                        boolean publishedOnly, Long instructorId, List<Long> categoryIds, int page, int size) {
         Specification<Course> spec = (root, q, cb) -> {
             List<Predicate> ps = new ArrayList<>();
             if (publishedOnly) ps.add(cb.isTrue(root.<Boolean>get("published")));
-            if (instructorId != null) ps.add(cb.equal(root.get("instructor").get("id"), instructorId));
+            if (instructorId != null) {
+                Predicate mine = cb.equal(root.get("instructor").get("id"), instructorId);
+                ps.add(categoryIds == null || categoryIds.isEmpty() ? mine : cb.or(mine, root.get("category").get("id").in(categoryIds)));
+            }
             if (search != null && !search.isBlank()) {
                 String p = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
                 ps.add(cb.or(cb.like(cb.lower(root.<String>get("title")), p),
@@ -127,7 +142,7 @@ public class CourseService {
             if (featured != null) ps.add(cb.equal(root.get("featured"), featured));
             return cb.and(ps.toArray(new Predicate[0]));
         };
-        Sort sort = Sort.by(Sort.Order.desc("featured"), Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
+        Sort sort = Sort.by(Sort.Order.desc("featured"), Sort.Order.asc("stage"), Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
         Page<Course> p = courses.findAll(spec, PageRequest.of(Math.max(0, page - 1), Math.min(Math.max(size, 1), 50), sort));
         return new PageDto<>(toListItems(p.getContent()), p.getTotalElements(), page, size);
     }
@@ -141,7 +156,8 @@ public class CourseService {
                 c.getThumbnailUrl(), c.getLevel(), c.getPrice(), c.isFeatured(), c.isPublished(),
                 CategoryService.brief(c.getCategory()), instructor(c.getInstructor()), s[0], s[1], s[2],
                 c.getCreatedAt(), c.getUpdatedAt(),
-                c.getLessons().stream().map(CourseService::lessonBrief).toList(), quizBriefs(c), enrolled, examBrief(c.getFinalExam()));
+                c.getLessons().stream().map(CourseService::lessonBrief).toList(), quizBriefs(c), enrolled, examBrief(c.getFinalExam()),
+                c.getStage(), c.getMinPlacementScore(), c.isSequential(), moduleBriefs(c));
     }
 
     // ---------------- admin / teacher ----------------
@@ -165,17 +181,30 @@ public class CourseService {
                 CategoryService.brief(c.getCategory()), instructor(c.getInstructor()), s[0], s[1], s[2],
                 c.getCreatedAt(), c.getUpdatedAt(),
                 c.getLessons().stream().map(this::lessonOut).toList(), quizBriefs(c),
-                c.getFinalExam() == null ? null : new ExamBrief(c.getFinalExam().getId(), c.getFinalExam().getTitle(), 0, 0));
+                c.getFinalExam() == null ? null : new ExamBrief(c.getFinalExam().getId(), c.getFinalExam().getTitle(), 0, 0),
+                c.getStage(), c.getMinPlacementScore(), c.isSequential(),
+                c.getModules().stream().map(m -> new ModuleBrief(m.getId(), m.getTitle(), m.getDescription(), m.getPosition(),
+                        m.getExam() == null ? null : new ExamBrief(m.getExam().getId(), m.getExam().getTitle(), 0, 0),
+                        c.getLessons().stream().filter(l -> l.getModule() != null && l.getModule().getId().equals(m.getId())).map(Lesson::getId).toList())).toList());
     }
 
     @Transactional(readOnly = true)
     public PageDto<CourseListItem> adminList(String search, AuthPrincipal me, int page, int size) {
-        Long instructorId = me.role() == Role.ADMIN ? null : me.id();
-        return list(search, null, null, null, false, instructorId, page, size);
+        if (me.role() == Role.ADMIN) return list(search, null, null, null, false, null, null, page, size);
+        return list(search, null, null, null, false, me.id(), categoryService.teacherCategoryIds(me.id()), page, size);
+    }
+
+    /** O'qituvchi faqat o'ziga biriktirilgan fanda kurs ochadi. */
+    private void checkCategoryAllowed(Long categoryId, AuthPrincipal me) {
+        if (me.role() == Role.ADMIN) return;
+        if (categoryId == null || !categoryService.isTeacherOf(me.id(), categoryId)) {
+            throw AppException.forbidden("Kursni faqat sizga biriktirilgan fan (yo'nalish) ichida yaratish mumkin");
+        }
     }
 
     @Transactional
     public CourseAdminDetail create(CourseInput in, AuthPrincipal me) {
+        checkCategoryAllowed(in.categoryId(), me);
         Course c = new Course();
         apply(c, in);
         c.setSlug(SlugUtil.unique(in.title(), courses::existsBySlug));
@@ -206,11 +235,56 @@ public class CourseService {
         c.setPublished(in.published());
         c.setFeatured(in.featured());
         c.setFinalExam(in.finalExamId() == null ? null : exams.findById(in.finalExamId()).orElseThrow(() -> AppException.badRequest("Imtihon topilmadi")));
+        c.setStage(in.stage() == null || in.stage() <= 0 ? null : in.stage());
+        c.setMinPlacementScore(in.minPlacementScore() == null ? 0 : (short) Math.max(0, Math.min(100, in.minPlacementScore())));
+        c.setSequential(in.sequential());
     }
 
     @Transactional
     public void delete(Long id, AuthPrincipal me) {
         courses.delete(getManaged(id, me));
+    }
+
+    // ---------------- bo'limlar (modullar) ----------------
+
+    @Transactional
+    public ModuleBrief addModule(Long courseId, ModuleInput in, AuthPrincipal me) {
+        Course c = getManaged(courseId, me);
+        CourseModule m = new CourseModule();
+        m.setCourse(c);
+        applyModule(m, in);
+        if (in.position() == null) m.setPosition(c.getModules().stream().mapToInt(CourseModule::getPosition).max().orElse(0) + 1);
+        modules.save(m);
+        c.getModules().add(m);
+        c.setUpdatedAt(Instant.now());
+        return new ModuleBrief(m.getId(), m.getTitle(), m.getDescription(), m.getPosition(), examBrief(m.getExam()), List.of());
+    }
+
+    @Transactional
+    public ModuleBrief updateModule(Long moduleId, ModuleInput in, AuthPrincipal me) {
+        CourseModule m = modules.findById(moduleId).orElseThrow(() -> AppException.notFound("Bo'lim topilmadi"));
+        Course c = getManaged(m.getCourse().getId(), me);
+        applyModule(m, in);
+        c.setUpdatedAt(Instant.now());
+        return new ModuleBrief(m.getId(), m.getTitle(), m.getDescription(), m.getPosition(), examBrief(m.getExam()),
+                c.getLessons().stream().filter(l -> l.getModule() != null && l.getModule().getId().equals(m.getId())).map(Lesson::getId).toList());
+    }
+
+    @Transactional
+    public void deleteModule(Long moduleId, AuthPrincipal me) {
+        CourseModule m = modules.findById(moduleId).orElseThrow(() -> AppException.notFound("Bo'lim topilmadi"));
+        Course c = getManaged(m.getCourse().getId(), me);
+        for (Lesson l : c.getLessons()) if (l.getModule() != null && l.getModule().getId().equals(m.getId())) l.setModule(null);
+        c.getModules().remove(m);
+        modules.delete(m);
+        c.setUpdatedAt(Instant.now());
+    }
+
+    private void applyModule(CourseModule m, ModuleInput in) {
+        m.setTitle(in.title().trim());
+        m.setDescription(in.description() == null ? "" : in.description());
+        if (in.position() != null) m.setPosition(in.position());
+        m.setExam(in.examId() == null ? null : exams.findById(in.examId()).orElseThrow(() -> AppException.badRequest("Imtihon topilmadi")));
     }
 
     // ---------------- darslar ----------------
@@ -220,7 +294,7 @@ public class CourseService {
         Course c = getManaged(courseId, me);
         Lesson l = new Lesson();
         l.setCourse(c);
-        applyLesson(l, in);
+        applyLesson(l, in, c);
         if (in.position() == null) {
             l.setPosition(c.getLessons().stream().mapToInt(Lesson::getPosition).max().orElse(0) + 1);
         }
@@ -232,9 +306,9 @@ public class CourseService {
     @Transactional
     public LessonOut updateLesson(Long lessonId, LessonInput in, AuthPrincipal me) {
         Lesson l = lessons.findById(lessonId).orElseThrow(() -> AppException.notFound("Dars topilmadi"));
-        getManaged(l.getCourse().getId(), me);
-        applyLesson(l, in);
-        l.getCourse().setUpdatedAt(Instant.now());
+        Course c = getManaged(l.getCourse().getId(), me);
+        applyLesson(l, in, c);
+        c.setUpdatedAt(Instant.now());
         return lessonOut(l);
     }
 
@@ -248,7 +322,7 @@ public class CourseService {
         c.setUpdatedAt(Instant.now());
     }
 
-    private void applyLesson(Lesson l, LessonInput in) {
+    private void applyLesson(Lesson l, LessonInput in, Course c) {
         l.setTitle(in.title().trim());
         l.setContent(in.content() == null ? "" : in.content());
         l.setVideoUrl(blankToNull(in.videoUrl()));
@@ -259,6 +333,9 @@ public class CourseService {
         if (in.position() != null) l.setPosition(in.position());
         l.setPreview(in.preview());
         l.setExam(in.examId() == null ? null : exams.findById(in.examId()).orElseThrow(() -> AppException.badRequest("Imtihon topilmadi")));
+        if (in.moduleId() == null) l.setModule(null);
+        else l.setModule(c.getModules().stream().filter(m -> m.getId().equals(in.moduleId())).findFirst()
+                .orElseThrow(() -> AppException.badRequest("Bo'lim bu kursga tegishli emas")));
     }
 
     private static String blankToNull(String s) {

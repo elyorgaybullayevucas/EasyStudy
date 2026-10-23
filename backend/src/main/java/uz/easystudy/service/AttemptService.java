@@ -36,6 +36,7 @@ public class AttemptService {
     private final AuditService audit;
     private final MediaService media;
     private final ExamService examService;
+    private final org.springframework.beans.factory.ObjectProvider<SubjectService> subjectService;
     private final org.springframework.beans.factory.ObjectProvider<uz.easystudy.ai.AiGradingService> aiGrading; // sikl bog'liqlikni oldini olish
     private final org.springframework.beans.factory.ObjectProvider<uz.easystudy.ai.AiGradingWorker> aiWorker;
 
@@ -233,6 +234,10 @@ public class AttemptService {
         boolean pending = recompute(a, byQ);
         a.setSubmittedAt(Instant.now());
         a.setStatus(pending ? AttemptStatus.SUBMITTED : AttemptStatus.GRADED);
+        if (!pending) { // daraja aniqlash testi bo'lsa: bosqichga joylashtirish
+            SubjectService ss = subjectService.getIfAvailable();
+            if (ss != null) ss.placeAfterAttempt(a);
+        }
         for (AttemptSection st : attemptSections.findByAttemptId(a.getId())) if (st.getFinishedAt() == null) st.setFinishedAt(Instant.now());
         if (pending) {
             uz.easystudy.ai.AiGradingService ai = aiGrading.getIfAvailable();
@@ -334,6 +339,12 @@ public class AttemptService {
         return table.stream().filter(b -> b.getMinRaw() <= r && r <= b.getMaxRaw()).map(BandConversion::getScaled).findFirst().orElse(null);
     }
 
+    /** Umumiy yorliq (bo'lim mock natijasi uchun ham ishlatiladi). */
+    public static String overallLabel(List<BandConversion> table, Attempt a) {
+        BigDecimal key = a.getExam().getScoringMode() == ScoringMode.TOTAL ? a.getRawScore() : a.getScaledScore();
+        return label(table, key);
+    }
+
     private static String label(List<BandConversion> table, BigDecimal value) {
         if (value == null) return null;
         int r = value.setScale(0, RoundingMode.HALF_UP).intValue();
@@ -361,8 +372,8 @@ public class AttemptService {
     @Transactional(readOnly = true)
     public List<GradingRow> gradingQueue(AuthPrincipal me, boolean includeGraded) {
         List<AttemptStatus> statuses = includeGraded ? List.of(AttemptStatus.SUBMITTED, AttemptStatus.GRADED, AttemptStatus.EXPIRED) : List.of(AttemptStatus.SUBMITTED);
-        Long owner = me.role() == Role.ADMIN ? null : me.id();
-        return attempts.findForGrading(statuses, owner).stream().filter(a -> hasManual(a.getExam())).map(this::gradingRow).toList();
+        // O'qituvchi: o'z imtihonlari + biriktirilgan fanlardagi imtihonlar
+        return attempts.findForGrading(statuses, null).stream().filter(a -> hasManual(a.getExam()) && examService.canManage(me, a.getExam())).map(this::gradingRow).toList();
     }
 
     private static boolean hasManual(Exam e) {
@@ -468,9 +479,11 @@ public class AttemptService {
         String label = label(all, labelKey);
         String tpl = a.getExam().getTemplateCode();
         if (label == null && tpl != null && tpl.startsWith("IELTS")) label = ieltsCefr(a.getScaledScore());
+        SubjectService ss = subjectService.getIfAvailable();
         return new AttemptResult(a.getId(), a.getExam().getId(), a.getExam().getTitle(), a.getExam().getScoringMode(), tpl,
                 a.getStatus(), a.getSubmittedAt(), a.getUser().getFullName(),
-                a.getRawScore(), max.setScale(2, RoundingMode.HALF_UP), a.getScaledScore(), label, pendingCount, a.getAiStatus(), secs, rows);
+                a.getRawScore(), max.setScale(2, RoundingMode.HALF_UP), a.getScaledScore(), label, pendingCount, a.getAiStatus(), secs, rows,
+                ss == null ? null : ss.placementFor(a));
     }
 
     /** IELTS Test Report Form'dagi CEFR darajasi (rasmiy moslik). */

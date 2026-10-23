@@ -7,6 +7,13 @@ type Step = { title: string; items: string[] };
 type Guide = { code: string; title: string; summary: string; steps: Step[] };
 
 const general: Step[] = [
+  { title: "Onlayn maktab: fan -> daraja testi -> bosqichlar", items: [
+    "Har fan (Matematika, Fizika, Ingliz tili...) bosqichlarga bo'linadi: 1-bosqich (asoslar), 2-bosqich, 3-bosqich... Bosqich = alohida kurs: \"Kurslar -> Yangi kurs\" da fanni tanlang, \"Bosqich raqami\" va \"Daraja testidan minimal foiz\" ni kiriting (1-bosqich: 0%, 2-bosqich: ~40%, 3-bosqich: ~75%).",
+    "Daraja aniqlash testi: \"Mock imtihonlar -> Yangi -> Bo'sh\" shablonidan 15-20 ta savol (oson -> qiyin, erkin navigatsiya) yarating; umumiy konversiyada bosqich yorliqlarini yozing. So'ng (admin) \"Kategoriyalar -> Sozlash\" da fan uchun shu testni tanlang. Talaba natijasiga ko'ra tizim bosqichni o'zi tavsiya qiladi; keyingi bosqich oldingisi tugagach ochiladi.",
+    "Bosqich ichida \"Bo'limlar\" (mavzular guruhi) yarating, har darsni bo'limga biriktiring. Har darsga \"Testlar\" bo'limida mavzu testi qo'shing (darsni tanlang) — ketma-ket rejimda keyingi dars testdan o'tgach ochiladi. Bo'lim oxiriga \"Bo'limli mashqlar\" shablonidan mock biriktiring, kurs oxiriga yakuniy imtihonni.",
+    "Formulalar: dars matni, test savollari va mock savollarida LaTeX ishlaydi: satr ichida $x^2+1$, alohida qatorda $$\frac{a}{b}$$. Matnda ## sarlavha, **qalin**, - ro'yxat belgilari bor.",
+    "Fanga mas'ul o'qituvchi (admin biriktiradi, \"Kategoriyalar -> Sozlash\"): o'z fanidagi barcha kurs/darslar/testlar va mock imtihonlarni boshqaradi, \"Fanlarim\" sahifasida talabalar natijalarini kuzatadi.",
+  ] },
   { title: "Umumiy qoidalar", items: [
     "Imtihonni \"Mock imtihonlar → Yangi imtihon\" dan shablon tanlab yarating. Bo'limlar, vaqt, ball va konversiya jadvallari tayyor keladi.",
     "Har bo'limda \"Savollar\" (material), \"Sozlamalar va audio\" (yo'riqnoma, vaqt, audio) va \"Konversiya\" (xom ball → band) bo'limlari bor.",

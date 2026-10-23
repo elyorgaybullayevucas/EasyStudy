@@ -50,8 +50,8 @@ export default async function HomePage() {
               real formatdagi mock imtihonlar va tekshiriladigan sertifikatlar, barchasi bir platformada.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/courses" className="btn btn-lg bg-white text-brand-800 hover:bg-brand-50">
-                Kurslarni ko&apos;rish <ArrowRightIcon width={18} height={18} />
+              <Link href="/maktab" className="btn btn-lg bg-white text-brand-800 hover:bg-brand-50">
+                Onlayn maktabni boshlash <ArrowRightIcon width={18} height={18} />
               </Link>
               <Link href="/exams" className="btn btn-lg border border-white/30 text-white hover:bg-white/10">
                 Mock imtihon topshirish
@@ -106,7 +106,7 @@ export default async function HomePage() {
                   <p className="mb-4 text-sm text-slate-500">{groupLabels[g].subtitle}</p>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((c) => (
-                      <Link key={c.id} href={`/courses?category=${c.slug}`} className="card group flex items-center gap-4 p-5 transition hover:border-brand-300 hover:shadow-md">
+                      <Link key={c.id} href={c.group === "SCHOOL" ? `/maktab/${c.slug}` : `/courses?category=${c.slug}`} className="card group flex items-center gap-4 p-5 transition hover:border-brand-300 hover:shadow-md">
                         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
                           <CategoryIcon icon={c.icon} width={24} height={24} />
                         </span>

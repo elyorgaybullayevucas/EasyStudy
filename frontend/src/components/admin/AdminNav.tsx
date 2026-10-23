@@ -10,6 +10,7 @@ export function AdminNav() {
   const { user } = useAuth();
   const pathname = usePathname();
   const items = [
+    { href: "/admin/subjects", label: "Fanlarim", match: (p: string) => p.startsWith("/admin/subjects") },
     { href: "/admin", label: "Kurslar", match: (p: string) => p === "/admin" || p.startsWith("/admin/courses") },
     { href: "/admin/exams", label: "Mock imtihonlar", match: (p: string) => p.startsWith("/admin/exams") },
     { href: "/admin/grading", label: "Tekshirish navbati", match: (p: string) => p.startsWith("/admin/grading") },
@@ -35,7 +36,7 @@ export function AdminNav() {
       {user && (
         <div className="mt-6 rounded-xl bg-slate-100 p-3 text-xs text-slate-600">
           <p className="font-semibold text-slate-800">{user.fullName}</p>
-          <p>{user.role === "ADMIN" ? "Administrator: barcha kontent" : "O'qituvchi: faqat o'z kurslaringiz va maqolalaringiz"}</p>
+          <p>{user.role === "ADMIN" ? "Administrator: barcha kontent" : "O'qituvchi: sizga biriktirilgan fanlar, o'z kurslaringiz va maqolalaringiz"}</p>
           <Link href={`/teachers/${user.id}`} className="mt-2 inline-block text-brand-700 underline">Ochiq profilim</Link>
         </div>
       )}

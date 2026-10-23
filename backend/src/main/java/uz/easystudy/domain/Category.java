@@ -33,6 +33,20 @@ public class Category {
     @Column(nullable = false)
     private int position = 100;
 
+    /** Fan uchun daraja aniqlash (joylashtirish) testi. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "placement_exam_id")
+    private Exam placementExam;
+
+    /** Shu fan tayyorlaydigan sertifikat kategoriyalari sluglari (vergul bilan). */
+    @Column(name = "cert_slugs", length = 200)
+    private String certSlugs;
+
+    /** Fanga mas'ul o'qituvchilar: fandagi barcha kurs/imtihonlarni boshqaradi. */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "category_teachers", joinColumns = @JoinColumn(name = "category_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private java.util.Set<User> teachers = new java.util.HashSet<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

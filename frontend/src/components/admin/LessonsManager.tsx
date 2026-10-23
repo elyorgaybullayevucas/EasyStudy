@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/Alert";
 import { api, ApiError, type LessonInput } from "@/lib/api";
-import type { ExamSummary, Lesson } from "@/lib/types";
+import type { ExamSummary, Lesson, ModuleBrief } from "@/lib/types";
 
 import { MediaUpload } from "./MediaUpload";
 
-const emptyLesson: LessonInput = { title: "", content: "", videoUrl: "", videoKey: null, durationMinutes: 10, preview: false, examId: null };
+const emptyLesson: LessonInput = { title: "", content: "", videoUrl: "", videoKey: null, durationMinutes: 10, preview: false, examId: null, moduleId: null };
 
-export function LessonsManager({ courseId, lessons, onChange }: { courseId: number; lessons: Lesson[]; onChange: () => void }) {
+export function LessonsManager({ courseId, lessons, modules = [], onChange }: { courseId: number; lessons: Lesson[]; modules?: ModuleBrief[]; onChange: () => void }) {
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
@@ -21,7 +21,7 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
           {lessons.map((l, i) => (
             <li key={l.id} className="px-5 py-4">
               {editing === l.id ? (
-                <LessonEditor initial={{ ...l, videoUrl: l.videoSource === "EXTERNAL" ? (l.videoUrl ?? "") : "", videoKey: l.videoKey, examId: l.exam?.id ?? null }} onCancel={() => setEditing(null)}
+                <LessonEditor modules={modules} initial={{ ...l, videoUrl: l.videoSource === "EXTERNAL" ? (l.videoUrl ?? "") : "", videoKey: l.videoKey, examId: l.exam?.id ?? null, moduleId: l.moduleId }} onCancel={() => setEditing(null)}
                   onSave={async (data) => { await api.admin.updateLesson(l.id, data); setEditing(null); onChange(); }} />
               ) : (
                 <div className="flex flex-wrap items-center gap-4">
@@ -32,6 +32,7 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
                       {l.durationMinutes} daq {l.preview && "• bepul"} •{" "}
                       {l.videoSource === "PLATFORM" ? <span className="text-emerald-700">platforma videosi</span> : l.videoSource === "EXTERNAL" ? "tashqi video" : "video yo'q"}
                       {l.exam && <> · mock: <span className="text-brand-700">{l.exam.title}</span></>}
+                      {l.moduleId ? <> · bo&apos;lim: {modules.find((m) => m.id === l.moduleId)?.title ?? "?"}</> : modules.length > 0 ? <span className="text-amber-700"> · bo&apos;limsiz</span> : null}
                     </p>
                   </div>
                   {confirmDelete === l.id ? (
@@ -54,7 +55,7 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
       )}
       {editing === "new" ? (
         <div className="card p-5">
-          <LessonEditor initial={emptyLesson} onCancel={() => setEditing(null)}
+          <LessonEditor modules={modules} initial={{ ...emptyLesson, moduleId: modules[modules.length - 1]?.id ?? null }} onCancel={() => setEditing(null)}
             onSave={async (data) => { await api.admin.createLesson(courseId, data); setEditing(null); onChange(); }} />
         </div>
       ) : (
@@ -64,8 +65,8 @@ export function LessonsManager({ courseId, lessons, onChange }: { courseId: numb
   );
 }
 
-function LessonEditor({ initial, onSave, onCancel }: { initial: LessonInput & { position?: number | null }; onSave: (data: LessonInput) => Promise<void>; onCancel: () => void }) {
-  const [form, setForm] = useState<LessonInput>({ title: initial.title, content: initial.content, videoUrl: initial.videoUrl, videoKey: initial.videoKey, durationMinutes: initial.durationMinutes, preview: initial.preview, position: initial.position, examId: initial.examId ?? null });
+function LessonEditor({ initial, modules, onSave, onCancel }: { initial: LessonInput & { position?: number | null }; modules: ModuleBrief[]; onSave: (data: LessonInput) => Promise<void>; onCancel: () => void }) {
+  const [form, setForm] = useState<LessonInput>({ title: initial.title, content: initial.content, videoUrl: initial.videoUrl, videoKey: initial.videoKey, durationMinutes: initial.durationMinutes, preview: initial.preview, position: initial.position, examId: initial.examId ?? null, moduleId: initial.moduleId ?? null });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [exams, setExams] = useState<ExamSummary[]>([]);
@@ -98,7 +99,20 @@ function LessonEditor({ initial, onSave, onCancel }: { initial: LessonInput & { 
           <input type="url" className="input" placeholder="https://..." value={form.videoUrl ?? ""} onChange={(e) => setForm({ ...form, videoUrl: e.target.value })} />
         </div>
       )}
-      <div><label className="label">Dars matni / konspekt</label><textarea rows={5} className="input" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
+      {modules.length > 0 && (
+        <div>
+          <label className="label">Bo&apos;lim</label>
+          <select className="input" value={form.moduleId ?? ""} onChange={(e) => setForm({ ...form, moduleId: e.target.value ? Number(e.target.value) : null })}>
+            <option value="">— Bo&apos;limsiz —</option>
+            {modules.map((m) => <option key={m.id} value={m.id}>{m.position}. {m.title}</option>)}
+          </select>
+        </div>
+      )}
+      <div>
+        <label className="label">Dars matni / konspekt</label>
+        <textarea rows={8} className="input font-mono text-sm" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
+        <p className="mt-1 text-xs text-slate-500">Formulalar: satr ichida <code>{"$x^2 + 1$"}</code>, alohida qatorda <code>{"$$\\frac{a}{b}$$"}</code> (LaTeX). Belgilash: <code>## Sarlavha</code>, <code>**qalin**</code>, <code>- ro&apos;yxat</code>.</p>
+      </div>
       <div>
         <label className="label">Mavzu mock&apos;i (darsdan keyin tavsiya etiladigan bo&apos;lim mashqi, ixtiyoriy)</label>
         <select className="input" value={form.examId ?? ""} onChange={(e) => setForm({ ...form, examId: e.target.value ? Number(e.target.value) : null })}>

@@ -12,13 +12,14 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { PageLoader } from "@/components/ui/Spinner";
 import { api, ApiError } from "@/lib/api";
 import { cn } from "@/lib/format";
-import type { DashboardStats, MyCourse } from "@/lib/types";
+import type { DashboardStats, MyCourse, PlacementDto } from "@/lib/types";
 
 type Filter = "all" | "active" | "done";
 
 export default function DashboardPage() {
   const [courses, setCourses] = useState<MyCourse[] | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [placements, setPlacements] = useState<PlacementDto[]>([]);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -26,6 +27,7 @@ export default function DashboardPage() {
     Promise.all([api.me.courses(), api.me.dashboard()])
       .then(([c, s]) => { setCourses(c); setStats(s); })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Ma'lumotlarni yuklab bo'lmadi"));
+    api.subjects.myPlacements().then(setPlacements).catch(() => undefined);
   }, []);
 
   const visible = (courses ?? []).filter((c) => (filter === "all" ? true : filter === "done" ? c.progressPercent === 100 : c.progressPercent < 100));
@@ -43,6 +45,22 @@ export default function DashboardPage() {
               <StatCard icon={<TimerIcon />} label="Mock imtihonlar" value={stats.examsCompleted} tone="amber" />
               <StatCard icon={<AwardIcon />} label="Sertifikatlar" value={stats.certificates} tone="violet" />
             </div>
+            {placements.length > 0 && (
+              <div className="mt-10">
+                <h2 className="text-xl font-bold">Mening fanlarim (daraja testi)</h2>
+                <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {placements.map((p) => (
+                    <div key={p.categorySlug} className="card flex items-center gap-4 p-5">
+                      <div className="flex-1">
+                        <p className="font-semibold">{p.categoryName}</p>
+                        <p className="text-sm text-slate-600">{p.scorePercent}% → {p.stage}-bosqich{p.courseTitle ? `: ${p.courseTitle}` : ""}</p>
+                      </div>
+                      <Link href={p.courseSlug ? `/courses/${p.courseSlug}` : `/maktab/${p.categorySlug}`} className="btn-secondary">Ochish</Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
               <h2 className="text-xl font-bold">Mening kurslarim</h2>
               <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm">
@@ -54,7 +72,7 @@ export default function DashboardPage() {
             <div className="mt-6">
               {courses.length === 0 ? (
                 <EmptyState title="Siz hali hech qaysi kursga yozilmagansiz" description="Katalogdan o'zingizga yoqqan kursni tanlang va o'qishni boshlang."
-                  action={<Link href="/courses" className="btn-primary">Kurslarni ko&apos;rish</Link>} />
+                  action={<div className="flex gap-2"><Link href="/maktab" className="btn-primary">Onlayn maktab</Link><Link href="/courses" className="btn-secondary">Kurslar</Link></div>} />
               ) : visible.length === 0 ? <p className="py-10 text-center text-sm text-slate-500">Bu bo&apos;limda kurs yo&apos;q.</p> : (
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{visible.map((item) => <MyCourseCard key={item.course.id} item={item} />)}</div>
               )}
@@ -84,9 +102,10 @@ function MyCourseCard({ item }: { item: MyCourse }) {
     <div className="card flex flex-col overflow-hidden">
       <Link href={learnHref}><CourseThumb id={course.id} title={course.title} url={course.thumbnailUrl} icon={course.category?.icon} /></Link>
       <div className="flex flex-1 flex-col p-5">
-        <p className="text-xs text-slate-500">{course.category?.name}</p>
+        <p className="text-xs text-slate-500">{course.category?.name}{course.stage != null ? ` · ${course.stage}-bosqich` : ""}</p>
         <Link href={learnHref} className="mt-1 line-clamp-2 font-semibold hover:text-brand-700">{course.title}</Link>
         <div className="mt-auto pt-5">
+          {item.nextLessonTitle && item.progressPercent < 100 && <p className="mb-2 truncate text-xs text-slate-500">Keyingi: {item.nextLessonTitle}</p>}
           <div className="mb-2 flex justify-between text-xs text-slate-600"><span>{item.completedLessons} / {item.totalLessons} dars</span><span className="font-semibold">{item.progressPercent}%</span></div>
           <ProgressBar value={item.progressPercent} />
           <div className="mt-4 flex gap-2">

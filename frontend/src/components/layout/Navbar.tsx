@@ -11,6 +11,7 @@ import { cn } from "@/lib/format";
 import { Logo } from "./Logo";
 
 const links = [
+  { href: "/maktab", label: "Onlayn maktab" },
   { href: "/courses", label: "Kurslar" },
   { href: "/exams", label: "Mock imtihonlar" },
   { href: "/blog", label: "Maqolalar" },

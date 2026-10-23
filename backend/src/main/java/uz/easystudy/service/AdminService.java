@@ -48,6 +48,12 @@ public class AdminService {
         return new PageDto<>(p.getContent().stream().map(AuthService::toUser).toList(), p.getTotalElements(), page, size);
     }
 
+    /** Fanga biriktirish uchun o'qituvchilar ro'yxati. */
+    @Transactional(readOnly = true)
+    public List<UserResponse> teachers() {
+        return users.findByRoleOrderByFullNameAsc(Role.TEACHER).stream().map(AuthService::toUser).toList();
+    }
+
     @Transactional
     public UserResponse setRole(Long userId, Role role, AuthPrincipal me) {
         if (userId.equals(me.id())) throw AppException.badRequest("O'z rolingizni o'zgartira olmaysiz");

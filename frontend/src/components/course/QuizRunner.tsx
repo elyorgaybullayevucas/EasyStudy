@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/Alert";
 import { AwardIcon, CheckIcon, XIcon } from "@/components/ui/Icons";
+import { MathInline } from "@/components/ui/MathText";
 import { PageLoader } from "@/components/ui/Spinner";
 import { api, ApiError } from "@/lib/api";
 import { cn } from "@/lib/format";
@@ -69,7 +70,7 @@ export function QuizRunner({ quizId, onSubmitted }: { quizId: number; onSubmitte
           const r = resultById.get(q.id);
           return (
             <li key={q.id} className="card p-6">
-              <p className="font-semibold">{qi + 1}. {q.text}</p>
+              <p className="font-semibold">{qi + 1}. <MathInline text={q.text} /></p>
               <div className="mt-4 space-y-2">
                 {q.options.map((o) => {
                   const selected = answers[q.id] === o.id;
@@ -82,7 +83,7 @@ export function QuizRunner({ quizId, onSubmitted }: { quizId: number; onSubmitte
                       isCorrect && "border-emerald-400 bg-emerald-50", isWrongPick && "border-red-300 bg-red-50",
                       r && !isCorrect && !isWrongPick && "border-slate-200 opacity-70", r && "cursor-default")}>
                       <input type="radio" name={`q-${q.id}`} className="accent-brand-600" checked={selected} disabled={!!r} onChange={() => setAnswers((a) => ({ ...a, [q.id]: o.id }))} />
-                      <span className="flex-1">{o.text}</span>
+                      <span className="flex-1"><MathInline text={o.text} /></span>
                       {isCorrect && <CheckIcon width={18} height={18} className="text-emerald-600" />}
                       {isWrongPick && <XIcon width={18} height={18} className="text-red-600" />}
                     </label>

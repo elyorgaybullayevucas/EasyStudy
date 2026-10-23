@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { CourseForm } from "@/components/admin/CourseForm";
 import { LessonsManager } from "@/components/admin/LessonsManager";
+import { ModulesManager } from "@/components/admin/ModulesManager";
 import { Alert } from "@/components/ui/Alert";
 import { PageLoader } from "@/components/ui/Spinner";
 import { api, ApiError } from "@/lib/api";
@@ -48,13 +49,20 @@ export default function EditCoursePage() {
       <section>
         <h2 className="mb-4 text-lg font-semibold">Asosiy ma&apos;lumotlar</h2>
         <CourseForm key={course.updatedAt}
-          initial={{ title: course.title, shortDescription: course.shortDescription, description: course.description, thumbnailUrl: course.thumbnailUrl, level: course.level, price: course.price, categoryId: course.category?.id ?? null, published: course.published, featured: course.featured, finalExamId: course.finalExam?.id ?? null }}
+          initial={{ title: course.title, shortDescription: course.shortDescription, description: course.description, thumbnailUrl: course.thumbnailUrl, level: course.level, price: course.price, categoryId: course.category?.id ?? null, published: course.published, featured: course.featured, finalExamId: course.finalExam?.id ?? null, stage: course.stage, minPlacementScore: course.minPlacementScore, sequential: course.sequential }}
           submitLabel="O'zgarishlarni saqlash" onSubmit={async (data) => { setCourse(await api.admin.updateCourse(course.id, data)); }} />
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Darslar ({course.lessons.length})</h2>
-        <LessonsManager courseId={course.id} lessons={course.lessons} onChange={load} />
+        <h2 className="mb-1 text-lg font-semibold">Bo&apos;limlar ({course.modules.length})</h2>
+        <p className="mb-4 text-sm text-slate-500">Mavzular guruhi. Har bo&apos;lim oxirida bo&apos;lim mock&apos;i tavsiya etiladi. Darslarni bo&apos;limga dars tahririda biriktiring.</p>
+        <ModulesManager courseId={course.id} modules={course.modules} lessons={course.lessons} onChange={load} />
+      </section>
+
+      <section>
+        <h2 className="mb-1 text-lg font-semibold">Darslar ({course.lessons.length})</h2>
+        <p className="mb-4 text-sm text-slate-500">Har darsga mavzu testi qo&apos;shing (Testlar bo&apos;limida darsni tanlang) — ketma-ket rejimda keyingi dars testdan o&apos;tgach ochiladi.</p>
+        <LessonsManager courseId={course.id} lessons={course.lessons} modules={course.modules} onChange={load} />
       </section>
 
       <section>

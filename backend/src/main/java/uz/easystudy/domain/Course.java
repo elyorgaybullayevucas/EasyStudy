@@ -57,6 +57,18 @@ public class Course {
     @JoinColumn(name = "final_exam_id")
     private Exam finalExam;
 
+    /** Fan ichidagi bosqich raqami (1, 2, 3...); NULL = oddiy kurs. */
+    @Column
+    private Short stage;
+
+    /** Daraja testidan shu foiz va undan yuqori -> shu bosqich tavsiya etiladi. */
+    @Column(name = "min_placement_score", nullable = false)
+    private short minPlacementScore = 0;
+
+    /** Ketma-ket rejim: keyingi dars oldingi dars va uning testi bajarilgach ochiladi. */
+    @Column(nullable = false)
+    private boolean sequential = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -70,4 +82,8 @@ public class Course {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     private List<Quiz> quizzes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC, id ASC")
+    private List<CourseModule> modules = new ArrayList<>();
 }

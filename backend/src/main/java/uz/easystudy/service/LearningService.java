@@ -5,6 +5,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.easystudy.domain.*;
+import uz.easystudy.dto.CourseDtos.CourseListItem;
 import uz.easystudy.dto.CourseDtos.LessonOut;
 import uz.easystudy.dto.LearningDtos.*;
 import uz.easystudy.repository.*;
@@ -16,6 +17,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * O'quv jarayoni: yozilish (bosqich tekshiruvi bilan), progress (ketma-ket ochiladigan darslar, bo'lim mock natijalari),
+ * dars testlari, sertifikat.
+ */
 @Service
 @RequiredArgsConstructor
 public class LearningService {
@@ -30,15 +35,33 @@ public class LearningService {
     private final LessonProgressRepository lessonProgress;
     private final QuizAttemptRepository quizAttempts;
     private final CertificateRepository certificates;
+    private final AttemptRepository attempts;
+    private final PlacementRepository placements;
+    private final BandConversionRepository bands;
     private final UserRepository users;
     private final AuditService audit;
 
     // ---------------- yozilish va progress ----------------
 
+    /** Bosqichli kursga yozilish sharti: 1-bosqich ochiq; keyingi bosqich - daraja testi shu bosqichni ko'rsatsa yoki oldingi bosqich tugatilgan bo'lsa. */
+    private void checkStageAccess(Course c, AuthPrincipal me) {
+        if (c.getStage() == null || c.getStage() <= 1 || courseService.canManage(me, c)) return;
+        if (c.getCategory() != null) {
+            Optional<Placement> p = placements.findByUserIdAndCategoryId(me.id(), c.getCategory().getId());
+            if (p.isPresent() && p.get().getStage() >= c.getStage()) return;
+            boolean prevDone = courses.findByCategoryIdAndStageIsNotNullOrderByStageAsc(c.getCategory().getId()).stream()
+                    .filter(x -> x.getStage() == c.getStage() - 1)
+                    .anyMatch(x -> enrollments.findByUserIdAndCourseId(me.id(), x.getId()).map(e -> e.getCompletedAt() != null).orElse(false));
+            if (prevDone) return;
+        }
+        throw AppException.forbidden((c.getStage() - 1) + "-bosqichni tugating yoki darajani aniqlash testini topshiring - shunda " + c.getStage() + "-bosqich ochiladi");
+    }
+
     @Transactional
     public CourseProgress enroll(String slug, AuthPrincipal me, String ip) {
         Course c = courseService.getVisible(slug, me);
         if (!enrollments.existsByUserIdAndCourseId(me.id(), c.getId())) {
+            checkStageAccess(c, me);
             Enrollment e = new Enrollment();
             e.setUser(users.getReferenceById(me.id()));
             e.setCourse(c);
@@ -57,6 +80,8 @@ public class LearningService {
         List<Long> lessonIds = c.getLessons().stream().map(Lesson::getId).toList();
         Set<Long> done = new HashSet<>(lessonProgress.completedLessonIds(userId, c.getId()));
         List<QuizProgress> qp = quizProgress(userId, c);
+        Map<Long, QuizProgress> quizByLesson = new HashMap<>();
+        for (Quiz q : c.getQuizzes()) if (q.getLessonId() != null) qp.stream().filter(x -> x.quizId().equals(q.getId())).findFirst().ifPresent(x -> quizByLesson.put(q.getLessonId(), x));
 
         int totalItems = lessonIds.size() + qp.size();
         long doneItems = done.size() + qp.stream().filter(QuizProgress::passed).count();
@@ -66,8 +91,51 @@ public class LearningService {
         String cert = certificates.findByUserIdAndCourseId(userId, c.getId()).map(Certificate::getCode).orElse(null);
         Long next = lessonIds.stream().filter(id -> !done.contains(id)).findFirst().orElse(null);
 
+        // Ketma-ket rejim: dars ochiq, agar undan oldingi barcha darslar tugatilgan va ularning testlari (bo'lsa) topshirilgan bo'lsa
+        List<Long> unlocked = new ArrayList<>();
+        boolean open = true;
+        for (Lesson l : c.getLessons()) {
+            if (!c.isSequential()) { unlocked.add(l.getId()); continue; }
+            if (open) unlocked.add(l.getId());
+            QuizProgress lq = quizByLesson.get(l.getId());
+            boolean lessonOk = done.contains(l.getId()) && (lq == null || lq.passed());
+            open = open && lessonOk;
+        }
+
+        List<ModuleProgress> mp = moduleProgress(userId, c, done);
+        CourseListItem nextStage = null;
+        if (c.getStage() != null && c.getCategory() != null && totalItems > 0 && doneItems == totalItems) {
+            nextStage = courses.findByCategoryIdAndStageIsNotNullOrderByStageAsc(c.getCategory().getId()).stream()
+                    .filter(x -> x.isPublished() && x.getStage() == c.getStage() + 1).findFirst()
+                    .map(x -> courseService.toListItem(x, courseService.stats(List.of(x.getId())).get(x.getId()))).orElse(null);
+        }
+
         return new CourseProgress(c.getId(), enrolled, lessonIds.stream().filter(done::contains).toList(),
-                lessonIds.size(), qp, percent, totalItems > 0 && doneItems == totalItems, cert, next);
+                lessonIds.size(), qp, percent, totalItems > 0 && doneItems == totalItems, cert, next, unlocked, mp, nextStage);
+    }
+
+    private List<ModuleProgress> moduleProgress(Long userId, Course c, Set<Long> done) {
+        List<ModuleProgress> out = new ArrayList<>();
+        for (CourseModule m : c.getModules()) {
+            List<Lesson> ls = c.getLessons().stream().filter(l -> l.getModule() != null && l.getModule().getId().equals(m.getId())).toList();
+            int completed = (int) ls.stream().filter(l -> done.contains(l.getId())).count();
+            java.math.BigDecimal bestRaw = null, bestScaled = null;
+            String label = null;
+            long count = 0;
+            if (m.getExam() != null) {
+                List<Attempt> list = attempts.findByUserIdAndExamIdAndStatusInOrderByScaledScoreDescRawScoreDesc(userId, m.getExam().getId(),
+                        List.of(AttemptStatus.GRADED, AttemptStatus.EXPIRED, AttemptStatus.SUBMITTED));
+                count = list.size();
+                if (!list.isEmpty()) {
+                    Attempt best = list.get(0);
+                    bestRaw = best.getRawScore();
+                    bestScaled = best.getScaledScore();
+                    label = AttemptService.overallLabel(bands.findByExamIdOrderBySectionIdAscMinRawAsc(m.getExam().getId()), best);
+                }
+            }
+            out.add(new ModuleProgress(m.getId(), completed, ls.size(), bestRaw, bestScaled, label, count));
+        }
+        return out;
     }
 
     private List<QuizProgress> quizProgress(Long userId, Course c) {
@@ -78,8 +146,8 @@ public class LearningService {
         return qs.stream().map(q -> {
             Object[] r = best.get(q.getId());
             Integer score = r == null ? null : ((Number) r[1]).intValue();
-            long attempts = r == null ? 0 : ((Number) r[2]).longValue();
-            return new QuizProgress(q.getId(), q.getTitle(), score, attempts, score != null && score >= q.getPassScore());
+            long attemptsCount = r == null ? 0 : ((Number) r[2]).longValue();
+            return new QuizProgress(q.getId(), q.getTitle(), score, attemptsCount, score != null && score >= q.getPassScore());
         }).toList();
     }
 
@@ -104,7 +172,7 @@ public class LearningService {
             }
             String code = certificates.findByUserIdAndCourseId(userId, c.getId()).map(Certificate::getCode).orElse(null);
             return new CourseProgress(p.courseId(), p.enrolled(), p.completedLessonIds(), p.totalLessons(), p.quizzes(),
-                    p.progressPercent(), p.completed(), code, p.nextLessonId());
+                    p.progressPercent(), p.completed(), code, p.nextLessonId(), p.unlockedLessonIds(), p.modules(), p.nextStage());
         }
         return p;
     }
@@ -124,9 +192,13 @@ public class LearningService {
     public LessonOut lesson(String slug, Long lessonId, AuthPrincipal me) {
         Course c = courseService.getVisible(slug, me);
         Lesson l = lessons.findByIdAndCourseId(lessonId, c.getId()).orElseThrow(() -> AppException.notFound("Dars topilmadi"));
-        boolean access = l.isPreview() || (me != null &&
-                (enrollments.existsByUserIdAndCourseId(me.id(), c.getId()) || courseService.canManage(me, c)));
+        boolean manager = me != null && courseService.canManage(me, c);
+        boolean access = l.isPreview() || (me != null && (enrollments.existsByUserIdAndCourseId(me.id(), c.getId()) || manager));
         if (!access) throw AppException.forbidden("Darsni ko'rish uchun kursga yoziling");
+        if (c.isSequential() && !manager && me != null && !l.isPreview()) {
+            CourseProgress p = progress(me.id(), c);
+            if (!p.unlockedLessonIds().contains(l.getId())) throw AppException.forbidden("Bu dars hali ochilmagan: avval oldingi darsni tugating va testini topshiring");
+        }
         return courseService.lessonOut(l);
     }
 
@@ -140,6 +212,7 @@ public class LearningService {
     public CourseProgress completeLesson(Long lessonId, Long userId) {
         Lesson l = lessons.findById(lessonId).orElseThrow(() -> AppException.notFound("Dars topilmadi"));
         Course c = requireEnrollment(userId, l.getCourse().getId());
+        if (c.isSequential() && !progress(userId, c).unlockedLessonIds().contains(lessonId)) throw AppException.forbidden("Bu dars hali ochilmagan");
         if (lessonProgress.findByUserIdAndLessonId(userId, lessonId).isEmpty()) {
             LessonProgress p = new LessonProgress();
             p.setUserId(userId);
@@ -164,6 +237,9 @@ public class LearningService {
         Course c = q.getCourse();
         if (!enrollments.existsByUserIdAndCourseId(me.id(), c.getId()) && !courseService.canManage(me, c)) {
             throw AppException.forbidden("Avval kursga yoziling");
+        }
+        if (c.isSequential() && q.getLessonId() != null && !courseService.canManage(me, c) && !progress(me.id(), c).unlockedLessonIds().contains(q.getLessonId())) {
+            throw AppException.forbidden("Bu test hali ochilmagan");
         }
         return q;
     }
@@ -219,8 +295,9 @@ public class LearningService {
         return list.stream().map(e -> {
             Course c = e.getCourse();
             CourseProgress p = progress(userId, c);
+            String nextTitle = p.nextLessonId() == null ? null : c.getLessons().stream().filter(l -> l.getId().equals(p.nextLessonId())).map(Lesson::getTitle).findFirst().orElse(null);
             return new MyCourse(courseService.toListItem(c, st.get(c.getId())), e.getEnrolledAt(), e.getCompletedAt(),
-                    p.progressPercent(), p.completedLessonIds().size(), p.totalLessons(), p.nextLessonId(), p.certificateCode());
+                    p.progressPercent(), p.completedLessonIds().size(), p.totalLessons(), p.nextLessonId(), p.certificateCode(), nextTitle);
         }).toList();
     }
 

@@ -38,7 +38,10 @@ public class ExamService {
 
     @Transactional(readOnly = true)
     public List<ExamSummary> adminList(AuthPrincipal me) {
-        return summaries(me.role() == Role.ADMIN ? exams.findAllByOrderByCreatedAtDesc() : exams.findByOwnerIdOrderByCreatedAtDesc(me.id()));
+        if (me.role() == Role.ADMIN) return summaries(exams.findAllByOrderByCreatedAtDesc());
+        List<Long> cats = categoryService.teacherCategoryIds(me.id());
+        return summaries(exams.findAllByOrderByCreatedAtDesc().stream()
+                .filter(e -> (e.getOwner() != null && e.getOwner().getId().equals(me.id())) || (e.getCategory() != null && cats.contains(e.getCategory().getId()))).toList());
     }
 
     private List<ExamSummary> summaries(List<Exam> list) {
@@ -83,7 +86,9 @@ public class ExamService {
     public boolean canManage(AuthPrincipal me, Exam e) {
         if (me == null) return false;
         if (me.role() == Role.ADMIN) return true;
-        return me.role() == Role.TEACHER && e.getOwner() != null && e.getOwner().getId().equals(me.id());
+        if (me.role() != Role.TEACHER) return false;
+        if (e.getOwner() != null && e.getOwner().getId().equals(me.id())) return true;
+        return e.getCategory() != null && categoryService.isTeacherOf(me.id(), e.getCategory().getId());
     }
 
     public Exam managed(Long id, AuthPrincipal me) {

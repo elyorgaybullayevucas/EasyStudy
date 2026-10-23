@@ -12,6 +12,13 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     boolean existsByNameIgnoreCase(String name);
     boolean existsBySlug(String slug);
     List<Category> findAllByOrderByPositionAscNameAsc();
+    List<Category> findByGroupOrderByPositionAscNameAsc(uz.easystudy.domain.CategoryGroup group);
+    Optional<Category> findByPlacementExamId(Long examId);
+    /** O'qituvchiga biriktirilgan fanlar */
+    @Query("select c from Category c join c.teachers t where t.id = :userId order by c.position asc, c.name asc")
+    List<Category> findByTeacher(Long userId);
+    @Query("select c.id from Category c join c.teachers t where t.id = :userId")
+    List<Long> teacherCategoryIds(Long userId);
 
     /** [categoryId, publishedCourseCount] */
     @Query("select c.category.id, count(c) from Course c where c.category is not null and (:publishedOnly = false or c.published = true) group by c.category.id")

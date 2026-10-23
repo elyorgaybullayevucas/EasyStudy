@@ -40,6 +40,11 @@ public class Lesson {
     @Column(nullable = false)
     private boolean preview = false;
 
+    /** Dars qaysi bo'limga (modulga) tegishli. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "module_id")
+    private CourseModule module;
+
     /** Shu mavzu bo'yicha mock (bo'lim mashqi): darsdan keyin tavsiya etiladi. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_id")

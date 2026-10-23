@@ -4,6 +4,10 @@ import type {
   GradingAttempt, GradingRow, Lesson, MyCourse, Page, PartType, PostDetail, PostListItem, QuestionType, QuizAdmin,
   QuizPublic, QuizResult, ScoringMode, TeacherProfile, TemplateInfo, TokenResponse, User, UserRole,
   NavigationMode,
+  Subject,
+  PlacementDto,
+  ModuleBrief,
+  SubjectOverview,
 } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -122,6 +126,11 @@ export const api = {
     progress: (slug: string) => request<CourseProgress>(`/api/courses/${encodeURIComponent(slug)}/progress`),
     lesson: (slug: string, lessonId: number) => request<Lesson>(`/api/courses/${encodeURIComponent(slug)}/lessons/${lessonId}`),
   },
+  subjects: {
+    list: () => request<Subject[]>("/api/subjects"),
+    get: (slug: string) => request<Subject>(`/api/subjects/${encodeURIComponent(slug)}`),
+    myPlacements: () => request<PlacementDto[]>("/api/subjects/my-placements"),
+  },
   learning: {
     completeLesson: (id: number) => request<CourseProgress>(`/api/lessons/${id}/complete`, { method: "POST" }),
     uncompleteLesson: (id: number) => request<CourseProgress>(`/api/lessons/${id}/complete`, { method: "DELETE" }),
@@ -162,12 +171,20 @@ export const api = {
     createLesson: (courseId: number, data: LessonInput) => request<Lesson>(`/api/admin/courses/${courseId}/lessons`, { method: "POST", body: data }),
     updateLesson: (id: number, data: LessonInput) => request<Lesson>(`/api/admin/lessons/${id}`, { method: "PUT", body: data }),
     deleteLesson: (id: number) => request<void>(`/api/admin/lessons/${id}`, { method: "DELETE" }),
+    createModule: (courseId: number, data: ModuleInput) => request<ModuleBrief>(`/api/admin/courses/${courseId}/modules`, { method: "POST", body: data }),
+    updateModule: (id: number, data: ModuleInput) => request<ModuleBrief>(`/api/admin/modules/${id}`, { method: "PUT", body: data }),
+    deleteModule: (id: number) => request<void>(`/api/admin/modules/${id}`, { method: "DELETE" }),
+    mySubjects: () => request<Category[]>("/api/admin/subjects"),
+    subjectOverview: (slug: string) => request<SubjectOverview>(`/api/admin/subjects/${encodeURIComponent(slug)}/overview`),
+    teachers: () => request<User[]>("/api/admin/teachers"),
+    setCategoryTeachers: (id: number, userIds: number[]) => request<Category>(`/api/admin/categories/${id}/teachers`, { method: "PUT", body: { userIds } }),
+    updateCategory: (id: number, data: CategoryInput) => request<Category>(`/api/admin/categories/${id}`, { method: "PUT", body: data }),
     quiz: (id: number) => request<QuizAdmin>(`/api/admin/quizzes/${id}`),
     createQuiz: (courseId: number, data: QuizInput) => request<QuizAdmin>(`/api/admin/courses/${courseId}/quizzes`, { method: "POST", body: data }),
     updateQuiz: (id: number, data: QuizInput) => request<QuizAdmin>(`/api/admin/quizzes/${id}`, { method: "PUT", body: data }),
     deleteQuiz: (id: number) => request<void>(`/api/admin/quizzes/${id}`, { method: "DELETE" }),
     categories: () => request<Category[]>("/api/admin/categories"),
-    createCategory: (data: { name: string; description?: string; icon?: string; group: string; position?: number }) => request<Category>("/api/admin/categories", { method: "POST", body: data }),
+    createCategory: (data: CategoryInput) => request<Category>("/api/admin/categories", { method: "POST", body: data }),
     deleteCategory: (id: number) => request<void>(`/api/admin/categories/${id}`, { method: "DELETE" }),
     users: (params: { search?: string; page?: number } = {}) => request<Page<User>>(`/api/admin/users${qs({ ...params, size: 50 })}`),
     setRole: (id: number, role: UserRole) => request<User>(`/api/admin/users/${id}/role`, { method: "PATCH", body: { role } }),
@@ -213,6 +230,9 @@ export interface CourseInput {
   published: boolean;
   featured: boolean;
   finalExamId?: number | null;
+  stage?: number | null;
+  minPlacementScore?: number | null;
+  sequential?: boolean;
 }
 
 export interface LessonInput {
@@ -224,6 +244,7 @@ export interface LessonInput {
   position?: number | null;
   preview: boolean;
   examId?: number | null;
+  moduleId?: number | null;
 }
 
 export type MediaKind = "VIDEO" | "AUDIO" | "IMAGE";
@@ -279,6 +300,23 @@ export interface ExamInput {
   scoringMode?: ScoringMode | null;
   navigationMode?: NavigationMode | null;
   instructions?: string | null;
+}
+
+export interface ModuleInput {
+  title: string;
+  description?: string;
+  position?: number | null;
+  examId?: number | null;
+}
+
+export interface CategoryInput {
+  name: string;
+  description?: string;
+  icon?: string;
+  group: string;
+  position?: number;
+  placementExamId?: number | null;
+  certSlugs?: string;
 }
 
 export interface SectionInput {

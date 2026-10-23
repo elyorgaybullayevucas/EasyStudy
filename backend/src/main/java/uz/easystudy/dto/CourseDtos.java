@@ -12,7 +12,8 @@ public final class CourseDtos {
     private CourseDtos() {}
 
     public record CategoryDto(Long id, String name, String slug, String description, String icon,
-                              uz.easystudy.domain.CategoryGroup group, int position, long courseCount, long examCount) {}
+                              uz.easystudy.domain.CategoryGroup group, int position, long courseCount, long examCount,
+                              ExamBrief placementExam, List<String> certSlugs, List<InstructorBrief> teachers) {}
 
     public record CategoryBrief(Long id, String name, String slug, String icon, uz.easystudy.domain.CategoryGroup group) {}
 
@@ -20,25 +21,32 @@ public final class CourseDtos {
 
     public record ExamBrief(Long id, String title, int totalMinutes, int questionCount) {}
 
-    public record LessonBrief(Long id, String title, int durationMinutes, int position, boolean preview, ExamBrief exam) {}
+    public record LessonBrief(Long id, String title, int durationMinutes, int position, boolean preview, ExamBrief exam, Long moduleId) {}
+
+    /** Bo'lim (modul): mavzular guruhi + bo'lim mock'i. */
+    public record ModuleBrief(Long id, String title, String description, int position, ExamBrief exam, List<Long> lessonIds) {}
+
+    public record ModuleInput(@NotBlank @Size(min = 2, max = 200) String title, String description, Integer position, Long examId) {}
 
     /** videoUrl: platformadagi video uchun vaqtli imzolangan havola, aks holda tashqi havola. */
     public record LessonOut(Long id, Long courseId, String title, String content, String videoUrl, String videoSource,
-                            String videoKey, int durationMinutes, int position, boolean preview, ExamBrief exam) {}
+                            String videoKey, int durationMinutes, int position, boolean preview, ExamBrief exam, Long moduleId) {}
 
     public record QuizBrief(Long id, String title, Long lessonId, int passScore, long questionCount) {}
 
     public record CourseListItem(Long id, String title, String slug, String shortDescription, String thumbnailUrl,
                                  CourseLevel level, int price, boolean featured, boolean published,
                                  CategoryBrief category, InstructorBrief instructor,
-                                 long lessonCount, long totalMinutes, long studentCount) {}
+                                 long lessonCount, long totalMinutes, long studentCount,
+                                 Short stage, short minPlacementScore, boolean sequential) {}
 
     public record CourseDetail(Long id, String title, String slug, String shortDescription, String description,
                                String thumbnailUrl, CourseLevel level, int price, boolean featured, boolean published,
                                CategoryBrief category, InstructorBrief instructor,
                                long lessonCount, long totalMinutes, long studentCount,
                                Instant createdAt, Instant updatedAt,
-                               List<LessonBrief> lessons, List<QuizBrief> quizzes, boolean enrolled, ExamBrief finalExam) {}
+                               List<LessonBrief> lessons, List<QuizBrief> quizzes, boolean enrolled, ExamBrief finalExam,
+                               Short stage, short minPlacementScore, boolean sequential, List<ModuleBrief> modules) {}
 
     /** Admin ko'rinishi: darslar to'liq (kontent va video bilan). */
     public record CourseAdminDetail(Long id, String title, String slug, String shortDescription, String description,
@@ -46,7 +54,8 @@ public final class CourseDtos {
                                     CategoryBrief category, InstructorBrief instructor,
                                     long lessonCount, long totalMinutes, long studentCount,
                                     Instant createdAt, Instant updatedAt,
-                                    List<LessonOut> lessons, List<QuizBrief> quizzes, ExamBrief finalExam) {}
+                                    List<LessonOut> lessons, List<QuizBrief> quizzes, ExamBrief finalExam,
+                                    Short stage, short minPlacementScore, boolean sequential, List<ModuleBrief> modules) {}
 
     // ---------- kirish DTO lari ----------
 
@@ -60,7 +69,10 @@ public final class CourseDtos {
             Long categoryId,
             boolean published,
             boolean featured,
-            Long finalExamId) {}
+            Long finalExamId,
+            Short stage,
+            Short minPlacementScore,
+            boolean sequential) {}
 
     public record LessonInput(
             @NotBlank @Size(min = 2, max = 200) String title,
@@ -70,12 +82,15 @@ public final class CourseDtos {
             @Min(0) int durationMinutes,
             Integer position,
             boolean preview,
-            Long examId) {}
+            Long examId,
+            Long moduleId) {}
 
     public record CategoryInput(
             @NotBlank @Size(min = 2, max = 100) String name,
             String description,
             @Size(max = 50) String icon,
             uz.easystudy.domain.CategoryGroup group,
-            Integer position) {}
+            Integer position,
+            Long placementExamId,
+            String certSlugs) {}
 }

@@ -30,7 +30,7 @@ public class CourseController {
                                         @RequestParam(required = false) Boolean featured,
                                         @RequestParam(defaultValue = "1") int page,
                                         @RequestParam(defaultValue = "12") int size) {
-        return courses.list(search, category, level, featured, true, null, page, size);
+        return courses.list(search, category, level, featured, true, null, null, page, size);
     }
 
     @GetMapping("/{slug}")

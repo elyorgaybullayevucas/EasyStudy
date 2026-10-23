@@ -40,7 +40,8 @@ public final class AttemptDtos {
                                 AttemptStatus status, Instant submittedAt, String studentName,
                                 BigDecimal rawScore, BigDecimal maxScore, BigDecimal scaledScore, String label,
                                 int pendingCount, uz.easystudy.domain.AiStatus aiStatus,
-                                List<SectionResult> sections, List<AnswerResult> answers) {}
+                                List<SectionResult> sections, List<AnswerResult> answers,
+                                uz.easystudy.dto.SubjectDtos.PlacementDto placement) {}
 
     // ---------- o'qituvchi tekshiruvi ----------
     public record GradingRow(Long attemptId, Long examId, String examTitle, String studentName, String studentEmail,
