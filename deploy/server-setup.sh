@@ -73,7 +73,7 @@ docker compose -f docker-compose.prod.yml ps
 
 echo "==> Zaxira nusxa: har kuni 03:00 (deploy/backup.sh)"
 chmod +x deploy/backup.sh
-( crontab -l 2>/dev/null | grep -v easystudy/deploy/backup.sh; echo "0 3 * * * $APP_DIR/deploy/backup.sh >> /var/log/easystudy-backup.log 2>&1" ) | crontab -
+( (crontab -l 2>/dev/null || true) | grep -v easystudy/deploy/backup.sh || true; echo "0 3 * * * $APP_DIR/deploy/backup.sh >> /var/log/easystudy-backup.log 2>&1" ) | crontab -
 
 echo
 echo "Tayyor: https://$DOMAIN  (sertifikat 1-2 daqiqada olinadi; DNS A yozuvi serverga ko'rsatgan bo'lishi shart)"
