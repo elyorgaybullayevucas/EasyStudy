@@ -87,6 +87,20 @@ public class CategoryService {
         return toDto(c, 0, 0);
     }
 
+    /** O'qituvchiga bir nechta fanni biriktirish (ro'yxat to'liq almashtiriladi). */
+    @Transactional
+    public List<CategoryDto> setTeacherSubjects(Long userId, List<Long> categoryIds) {
+        User u = users.findById(userId).orElseThrow(() -> AppException.notFound("Foydalanuvchi topilmadi"));
+        if (u.getRole() == Role.STUDENT) throw AppException.badRequest("Avval rolini TEACHER qiling");
+        Set<Long> want = new HashSet<>(categoryIds == null ? List.<Long>of() : categoryIds);
+        for (Category c : categories.findAll()) {
+            boolean has = c.getTeachers().stream().anyMatch(t -> t.getId().equals(userId));
+            if (want.contains(c.getId()) && !has) c.getTeachers().add(u);
+            else if (!want.contains(c.getId()) && has) c.getTeachers().removeIf(t -> t.getId().equals(userId));
+        }
+        return categories.findByTeacher(userId).stream().map(c -> toDto(c, 0, 0)).toList();
+    }
+
     // ---------------- CRUD ----------------
 
     @Transactional

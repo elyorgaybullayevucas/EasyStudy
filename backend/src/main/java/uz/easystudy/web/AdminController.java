@@ -51,6 +51,15 @@ public class AdminController {
 
     public record TeachersInput(List<Long> userIds) {}
 
+    public record SubjectsInput(List<Long> categoryIds) {}
+
+    /** O'qituvchiga bir nechta fan biriktirish. */
+    @PutMapping("/users/{id}/subjects")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<CategoryDto> setUserSubjects(@PathVariable Long id, @RequestBody SubjectsInput r) {
+        return categories.setTeacherSubjects(id, r.categoryIds());
+    }
+
     @PutMapping("/categories/{id}/teachers")
     @PreAuthorize("hasRole('ADMIN')")
     public CategoryDto setTeachers(@PathVariable Long id, @RequestBody TeachersInput r) {

@@ -32,6 +32,19 @@ function UsersContent() {
     api.admin.categories().then(setCategories).catch(() => undefined);
   }, [search]);
   const subjectsOf = (userId: number) => categories.filter((c) => c.teachers.some((t) => t.id === userId));
+  const [editingSubjects, setEditingSubjects] = useState<number | null>(null);
+  const [picked, setPicked] = useState<number[]>([]);
+  const saveSubjects = async (u: User) => {
+    setError("");
+    try {
+      await api.admin.setUserSubjects(u.id, picked);
+      setMsg(`${u.fullName} uchun fanlar saqlandi: ${picked.length ? categories.filter((c) => picked.includes(c.id)).map((c) => c.name).join(", ") : "yo'q"}.`);
+      setEditingSubjects(null);
+      load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Xatolik");
+    }
+  };
 
   useEffect(() => {
     const t = setTimeout(load, 250);
@@ -75,8 +88,27 @@ function UsersContent() {
                   </select>
                 </td>
                 <td className="px-4 py-3 text-slate-600">
-                  {u.role === "STUDENT" ? "—" : subjectsOf(u.id).length ? subjectsOf(u.id).map((c) => c.name).join(", ")
-                    : <Link href="/admin/categories" className="text-amber-700 underline">fan biriktirilmagan</Link>}
+                  {u.role === "STUDENT" ? "—" : editingSubjects === u.id ? (
+                    <div className="space-y-2">
+                      <div className="flex max-w-xl flex-wrap gap-2">
+                        {categories.map((c) => (
+                          <label key={c.id} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs">
+                            <input type="checkbox" className="accent-brand-600" checked={picked.includes(c.id)} onChange={(e) => setPicked(e.target.checked ? [...picked, c.id] : picked.filter((x) => x !== c.id))} />
+                            {c.name}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => saveSubjects(u)} className="btn-primary py-1 text-xs">Saqlash</button>
+                        <button onClick={() => setEditingSubjects(null)} className="btn-ghost py-1 text-xs">Bekor</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {subjectsOf(u.id).length ? <span>{subjectsOf(u.id).map((c) => c.name).join(", ")}</span> : <span className="text-amber-700">fan biriktirilmagan</span>}
+                      <button onClick={() => { setEditingSubjects(u.id); setPicked(subjectsOf(u.id).map((c) => c.id)); }} className="btn-ghost py-1 text-xs">Fanlarni tanlash</button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

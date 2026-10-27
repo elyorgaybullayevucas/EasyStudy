@@ -177,6 +177,7 @@ export const api = {
     mySubjects: () => request<Category[]>("/api/admin/subjects"),
     subjectOverview: (slug: string) => request<SubjectOverview>(`/api/admin/subjects/${encodeURIComponent(slug)}/overview`),
     teachers: () => request<User[]>("/api/admin/teachers"),
+    setUserSubjects: (userId: number, categoryIds: number[]) => request<Category[]>(`/api/admin/users/${userId}/subjects`, { method: "PUT", body: { categoryIds } }),
     setCategoryTeachers: (id: number, userIds: number[]) => request<Category>(`/api/admin/categories/${id}/teachers`, { method: "PUT", body: { userIds } }),
     updateCategory: (id: number, data: CategoryInput) => request<Category>(`/api/admin/categories/${id}`, { method: "PUT", body: data }),
     quiz: (id: number) => request<QuizAdmin>(`/api/admin/quizzes/${id}`),
