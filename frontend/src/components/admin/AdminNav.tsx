@@ -37,7 +37,10 @@ export function AdminNav() {
         <div className="mt-6 rounded-xl bg-slate-100 p-3 text-xs text-slate-600">
           <p className="font-semibold text-slate-800">{user.fullName}</p>
           <p>{user.role === "ADMIN" ? "Administrator: barcha kontent" : "O'qituvchi: sizga biriktirilgan fanlar, o'z kurslaringiz va maqolalaringiz"}</p>
-          <Link href={`/teachers/${user.id}`} className="mt-2 inline-block text-brand-700 underline">Ochiq profilim</Link>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link href="/profile" className="text-brand-700 underline">Profil va parol</Link>
+            <Link href={`/teachers/${user.id}`} className="text-brand-700 underline">Ochiq profilim</Link>
+          </div>
         </div>
       )}
     </aside>

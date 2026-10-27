@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useAuth } from "@/components/auth/AuthProvider";
+import { isStaff, useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/format";
 
 const tabs = [
@@ -20,8 +20,8 @@ export function DashboardHeader() {
       <div className="container-page pt-10">
         <p className="text-sm text-slate-500">Shaxsiy kabinet</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">Salom, {user?.fullName.split(" ")[0]}!</h1>
-        <nav className="mt-6 flex gap-6">
-          {tabs.map((t) => (
+        <nav className="mt-6 flex flex-wrap gap-6">
+          {[...tabs, { href: "/profile", label: "Profil va parol" }, ...(isStaff(user) ? [{ href: "/admin", label: "Boshqaruv paneli" }] : [])].map((t) => (
             <Link key={t.href} href={t.href} className={cn("border-b-2 pb-3 text-sm font-medium transition", pathname === t.href ? "border-brand-600 text-brand-700" : "border-transparent text-slate-600 hover:text-slate-900")}>
               {t.label}
             </Link>
