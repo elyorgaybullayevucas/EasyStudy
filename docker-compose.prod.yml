@@ -1,7 +1,21 @@
 # Production: bitta VPS, Docker Compose, Caddy (avtomatik HTTPS, Let's Encrypt).
 # Ishga tushirish: cp .env.prod.example .env && nano .env && docker compose -f docker-compose.prod.yml up -d --build
 # Tashqariga faqat 80/443 ochiladi; DB va backend faqat ichki tarmoqda.
+#
+# Tarmoqlar (2026-11: frontend konteyneriga Next.js zaifligi orqali mayner kirganidan keyin ajratildi):
+#   web    - caddy <-> frontend/backend. Internetga chiqish YO'Q.
+#   data   - backend <-> db. Internetga chiqish YO'Q.
+#   egress - internetga chiqish: faqat caddy (sertifikat) va backend (pochta, AI, S3).
+# Frontend faqat `web`da: buzib kirilgan taqdirda ham u internetdan hech narsa yuklab ololmaydi,
+# hech qayerga ulana olmaydi va bazani ko'rmaydi.
 name: easystudy
+
+# Konteyner ichida huquqni oshirib bo'lmaydi, Linux imtiyozlari (capabilities) olib tashlangan
+x-hardened: &hardened
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
 
 services:
   db:
@@ -18,6 +32,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks: [data]
+    security_opt:
+      - no-new-privileges:true
     logging: &log
       driver: json-file
       options: { max-size: "20m", max-file: "5" }
@@ -25,6 +42,8 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
+    <<: *hardened
+    networks: [web, data, egress]
     depends_on:
       db:
         condition: service_healthy
@@ -76,6 +95,18 @@ services:
       NEXT_PUBLIC_API_URL: https://${DOMAIN}
       API_URL_INTERNAL: http://backend:8080   # server-side render'lar ichki tarmoqdan
       HOSTNAME: 0.0.0.0
+    <<: *hardened
+    networks: [web]
+    # Fayl tizimi faqat o'qish uchun: konteynerga hech narsa yozib (dastur tashlab) bo'lmaydi.
+    # Yoziladigan ikki joy xotirada va u yerdan dastur ishga tushmaydi (noexec).
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+      - /app/.next/cache:rw,noexec,nosuid,nodev,size=256m,mode=1777
+    # Bitta konteyner butun serverni band qilib qo'ya olmaydi
+    cpus: 2
+    mem_limit: 1g
+    pids_limit: 256
     logging: *log
 
   caddy:
@@ -92,11 +123,21 @@ services:
       - "${BIND_IP:-0.0.0.0}:80:80"
       - "${BIND_IP:-0.0.0.0}:443:443"
       - "${BIND_IP:-0.0.0.0}:443:443/udp"   # HTTP/3
+    networks: [web, egress]
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     logging: *log
+
+networks:
+  web:
+    internal: true
+  data:
+    internal: true
+  egress:
 
 volumes:
   pgdata:

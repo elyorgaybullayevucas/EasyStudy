@@ -31,8 +31,15 @@
 		reverse_proxy backend:8080
 	}
 
-	# Frontend
+	# Frontend. Sahifalar faqat o'qiladi: barcha yozish so'rovlari /api/* orqali backendga boradi,
+	# Next.js'da "server action"lar ishlatilmaydi. Shuning uchun frontendga GET/HEAD dan boshqa so'rov
+	# o'tkazilmaydi - Next.js/React'ning server tomonidagi zaifliklari (2026-11 dagi kabi) aynan
+	# POST so'rovi va Next-Action sarlavhasi orqali ishlatiladi.
 	handle {
+		@notread not method GET HEAD
+		respond @notread 405
+		@action header Next-Action *
+		respond @action 403
 		reverse_proxy frontend:3000
 	}
 
